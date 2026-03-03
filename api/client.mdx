@@ -145,6 +145,56 @@ response = client.parse.run(
 )
 ```
 
+## Client Methods
+
+### upload()
+
+Upload a file directly to Reducto for processing. Returns a `reducto://` URL that can be used in subsequent API calls.
+
+```python
+from pathlib import Path
+from reducto import Reducto
+
+client = Reducto()
+
+# Upload a file
+upload_response = client.upload(
+    file=Path("document.pdf"),
+    extension="pdf"  # Optional: specify file extension
+)
+
+print(upload_response.url)  # reducto://...
+
+# Use the uploaded file in a parse operation
+parse_response = client.parse.run(
+    input=upload_response.url,
+)
+```
+
+<ParamField path="file" type="FileTypes | str | None">
+  The file to upload. Can be:
+  - A `Path` object
+  - Raw bytes
+  - A tuple of `(filename, contents, media_type)`
+</ParamField>
+
+<ParamField path="extension" type="str | None">
+  Optional file extension hint (e.g., "pdf", "docx")
+</ParamField>
+
+### api_version()
+
+Get the current API version.
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+version = client.api_version()
+print(version)
+```
+
 ## Available Resources
 
 The Reducto client provides access to the following resource namespaces:
