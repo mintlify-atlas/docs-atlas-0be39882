@@ -1,0 +1,130 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Reducto Python SDK",
+  "projectDescription": "Python SDK for the Reducto API, providing document parsing, extraction, splitting, and editing capabilities with vision AI",
+  "theme": "palm",
+  "primaryColor": "#3B82F6",
+  "lightColor": "#60A5FA",
+  "darkColor": "#2563EB",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/authentication",
+              "concepts/environments",
+              "concepts/async-support",
+              "concepts/error-handling"
+            ]
+          },
+          {
+            "group": "Main Features",
+            "pages": [
+              "features/parsing",
+              "features/extraction",
+              "features/splitting",
+              "features/editing",
+              "features/pipeline"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/file-uploads",
+              "advanced/streaming",
+              "advanced/webhooks",
+              "advanced/job-management",
+              "advanced/configuration"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/retries-timeouts",
+              "guides/custom-http-client",
+              "guides/logging"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Client",
+            "pages": [
+              "api/client",
+              "api/async-client"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "api/parse",
+              "api/extract",
+              "api/split",
+              "api/edit",
+              "api/pipeline",
+              "api/job",
+              "api/webhook"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api/types/responses",
+              "api/types/configuration",
+              "api/types/shared"
+            ]
+          },
+          {
+            "group": "Exceptions",
+            "pages": [
+              "api/exceptions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Document parsing with vision AI for PDFs and other document formats",
+    "Structured data extraction with custom instructions",
+    "Document splitting by content categories",
+    "AI-powered document editing and transformation",
+    "Pipeline support for chaining multiple operations",
+    "Async/await support with httpx and aiohttp backends",
+    "Job management for async operations with webhooks",
+    "File upload support with multiple input formats"
+  ],
+  "publicApiSurface": [
+    "Reducto (sync client)",
+    "AsyncReducto (async client)",
+    "client.parse.run() - Parse documents synchronously",
+    "client.parse.run_job() - Parse documents asynchronously",
+    "client.extract.run() - Extract structured data",
+    "client.extract.run_job() - Extract data asynchronously",
+    "client.split.run() - Split documents by category",
+    "client.split.run_job() - Split documents asynchronously",
+    "client.edit.run() - Edit documents with AI",
+    "client.edit.run_job() - Edit documents asynchronously",
+    "client.pipeline.run() - Run multi-step pipelines",
+    "client.pipeline.run_job() - Run pipelines asynchronously",
+    "client.job.get() - Get job status",
+    "client.job.get_all() - List all jobs",
+    "client.job.cancel() - Cancel a running job",
+    "client.upload() - Upload files directly",
+    "client.webhook.run() - Configure webhooks"
+  ]
+}
