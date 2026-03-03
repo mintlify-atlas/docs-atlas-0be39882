@@ -1,0 +1,88 @@
+---
+title: Authentication
+description: Configure API key authentication for the Reducto Python SDK
+---
+
+## API Key Configuration
+
+The Reducto Python SDK requires an API key to authenticate requests to the Reducto API. You can provide your API key when initializing the client.
+
+### Basic Usage
+
+```python
+import os
+from reducto import Reducto
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),  # This is the default and can be omitted
+)
+```
+
+### Using Environment Variables
+
+The SDK automatically reads the `REDUCTO_API_KEY` environment variable by default. If this variable is set, you can omit the `api_key` parameter:
+
+```python
+from reducto import Reducto
+
+client = Reducto()  # Automatically uses REDUCTO_API_KEY from environment
+```
+
+<Note>
+The `api_key` parameter defaults to `os.environ.get("REDUCTO_API_KEY")` and can be omitted if the environment variable is set.
+</Note>
+
+### Using python-dotenv
+
+For better security and to keep your API key out of source control, we recommend using [python-dotenv](https://pypi.org/project/python-dotenv/) to manage your environment variables.
+
+<Steps>
+  <Step title="Install python-dotenv">
+    ```bash
+    pip install python-dotenv
+    ```
+  </Step>
+  
+  <Step title="Create a .env file">
+    Create a `.env` file in your project root:
+    ```bash
+    REDUCTO_API_KEY="your-api-key-here"
+    ```
+  </Step>
+  
+  <Step title="Load environment variables">
+    Load the environment variables in your Python code:
+    ```python
+    from dotenv import load_dotenv
+    from reducto import Reducto
+    
+    load_dotenv()  # Load variables from .env file
+    
+    client = Reducto()  # API key is loaded from environment
+    ```
+  </Step>
+  
+  <Step title="Add .env to .gitignore">
+    Ensure your `.env` file is added to `.gitignore` to prevent committing sensitive data:
+    ```bash
+    echo ".env" >> .gitignore
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Never commit your API key to source control. Always use environment variables or a `.env` file that is excluded from version control.
+</Warning>
+
+## Async Client Authentication
+
+The async client uses the same authentication configuration:
+
+```python
+import os
+from reducto import AsyncReducto
+
+client = AsyncReducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+)
+```

@@ -1,0 +1,105 @@
+---
+title: 'File Uploads'
+description: 'Learn how to upload files using different methods in the Reducto Python SDK'
+---
+
+## Overview
+
+The Reducto SDK supports multiple ways to upload files for processing. You can pass files as bytes, PathLike objects, or as tuples with custom filenames and media types.
+
+## Upload Methods
+
+Request parameters that correspond to file uploads can be passed in three formats:
+
+### 1. PathLike Objects
+
+The most common method is to use a `PathLike` object from Python's pathlib:
+
+```python
+from pathlib import Path
+from reducto import Reducto
+
+client = Reducto()
+
+client.upload(
+    file=Path("/path/to/file"),
+)
+```
+
+### 2. Bytes
+
+You can also pass file contents directly as bytes:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+with open("/path/to/file", "rb") as f:
+    file_bytes = f.read()
+
+client.upload(
+    file=file_bytes,
+)
+```
+
+### 3. Tuple Format
+
+For more control, use a tuple of `(filename, contents, media_type)`:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+with open("/path/to/file", "rb") as f:
+    file_contents = f.read()
+
+client.upload(
+    file=("document.pdf", file_contents, "application/pdf"),
+)
+```
+
+## Async File Uploads
+
+The async client uses the exact same interface. If you pass a `PathLike` instance, the file contents will be read asynchronously automatically:
+
+```python
+import asyncio
+from pathlib import Path
+from reducto import AsyncReducto
+
+client = AsyncReducto()
+
+async def main():
+    response = await client.upload(
+        file=Path("/path/to/file"),
+    )
+
+asyncio.run(main())
+```
+
+## Using with Parse
+
+Here's a complete example of uploading and parsing a document:
+
+```python
+from pathlib import Path
+from reducto import Reducto
+
+client = Reducto()
+
+# Parse a local file
+response = client.parse.run(
+    input=Path("/path/to/document.pdf"),
+)
+
+# Or parse from a URL
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+<Note>
+  All three upload methods work with both synchronous and asynchronous clients.
+</Note>

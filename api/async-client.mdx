@@ -1,0 +1,358 @@
+---
+title: "AsyncReducto Client"
+description: "Asynchronous Reducto client initialization and async/await usage"
+---
+
+## Overview
+
+The `AsyncReducto` class is the asynchronous client for the Reducto API. It provides the same functionality as the synchronous `Reducto` client but with full async/await support for better performance in concurrent applications.
+
+## Constructor
+
+```python
+from reducto import AsyncReducto
+
+client = AsyncReducto(
+    api_key="your-api-key",
+    environment="production",
+    timeout=60.0,
+    max_retries=2,
+)
+```
+
+## Parameters
+
+The `AsyncReducto` client accepts the same parameters as the synchronous `Reducto` client:
+
+<ParamField path="api_key" type="str" required>
+  Your Reducto API key. If not provided, the client will automatically read from the `REDUCTO_API_KEY` environment variable.
+  
+  You can obtain your API key from the [Reducto dashboard](https://platform.reducto.ai).
+</ParamField>
+
+<ParamField path="environment" type="Literal['production', 'eu', 'au']" default="production">
+  The API environment to use. Available options:
+  - `production` - US production environment (https://platform.reducto.ai)
+  - `eu` - EU production environment (https://eu.platform.reducto.ai)
+  - `au` - Australia production environment (https://au.platform.reducto.ai)
+</ParamField>
+
+<ParamField path="base_url" type="str | httpx.URL | None">
+  Override the base URL for the API. If provided, this takes precedence over the `environment` parameter.
+  
+  You can also set this via the `REDUCTO_BASE_URL` environment variable.
+</ParamField>
+
+<ParamField path="timeout" type="float | Timeout | None" default="3600.0">
+  Request timeout in seconds. Defaults to 1 hour (3600 seconds).
+  
+  For more granular control, pass an `httpx.Timeout` object:
+  ```python
+  import httpx
+  client = AsyncReducto(
+      timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0)
+  )
+  ```
+</ParamField>
+
+<ParamField path="max_retries" type="int" default="2">
+  Maximum number of retries for failed requests. Defaults to 2.
+  
+  The client automatically retries:
+  - Connection errors
+  - 408 Request Timeout
+  - 409 Conflict
+  - 429 Rate Limit
+  - 5xx Server errors
+  
+  Set to `0` to disable retries.
+</ParamField>
+
+<ParamField path="default_headers" type="Mapping[str, str] | None">
+  Additional headers to include with every request.
+  
+  ```python
+  client = AsyncReducto(
+      default_headers={"X-Custom-Header": "value"}
+  )
+  ```
+</ParamField>
+
+<ParamField path="default_query" type="Mapping[str, object] | None">
+  Default query parameters to include with every request.
+</ParamField>
+
+<ParamField path="http_client" type="httpx.AsyncClient | None">
+  Custom httpx async client instance for advanced use cases. Use this to configure:
+  - Custom proxies
+  - Custom transports
+  - Connection pooling
+  
+  See the [Using aiohttp](#using-aiohttp) section for an alternative HTTP client option.
+</ParamField>
+
+## Basic Usage
+
+### Simple Async Example
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto(
+        # api_key defaults to REDUCTO_API_KEY environment variable
+    )
+    
+    response = await client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+    
+    print(response)
+
+asyncio.run(main())
+```
+
+### With Explicit API Key
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto(
+        api_key="your-api-key",
+    )
+    
+    response = await client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+asyncio.run(main())
+```
+
+### With EU Environment
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto(
+        environment="eu",
+    )
+    
+    response = await client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+asyncio.run(main())
+```
+
+## Available Resources
+
+The AsyncReducto client provides access to the same resource namespaces as the synchronous client:
+
+- `client.parse` - Document parsing operations
+- `client.split` - Document splitting operations
+- `client.extract` - Data extraction operations
+- `client.edit` - Document editing operations
+- `client.job` - Job management operations
+- `client.pipeline` - Pipeline operations
+- `client.webhook` - Webhook configuration
+
+All methods on these resources are async and must be awaited.
+
+## Using aiohttp
+
+For improved concurrency performance, you can use `aiohttp` instead of the default `httpx` client:
+
+### Installation
+
+```bash
+pip install reductoai[aiohttp]
+```
+
+### Usage
+
+```python
+import asyncio
+from reducto import AsyncReducto, DefaultAioHttpClient
+
+async def main():
+    async with AsyncReducto(
+        http_client=DefaultAioHttpClient(),
+    ) as client:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+        print(response)
+
+asyncio.run(main())
+```
+
+The `aiohttp` client provides better performance for applications making many concurrent requests.
+
+## Advanced Features
+
+### Context Manager
+
+Use the async client as a context manager to ensure proper resource cleanup:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    async with AsyncReducto() as client:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+        # HTTP client is automatically closed when exiting
+
+asyncio.run(main())
+```
+
+### Per-Request Configuration
+
+Override client settings for individual requests:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto()
+    
+    # Override timeout for a specific request
+    response = await client.with_options(timeout=5.0).parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+    
+    # Override max retries
+    response = await client.with_options(max_retries=5).parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+asyncio.run(main())
+```
+
+### Concurrent Requests
+
+Process multiple documents concurrently for better performance:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def process_document(client, url):
+    return await client.parse.run(input=url)
+
+async def main():
+    client = AsyncReducto()
+    
+    urls = [
+        "https://example.com/doc1.pdf",
+        "https://example.com/doc2.pdf",
+        "https://example.com/doc3.pdf",
+    ]
+    
+    # Process all documents concurrently
+    results = await asyncio.gather(*[
+        process_document(client, url) for url in urls
+    ])
+    
+    for result in results:
+        print(result)
+
+asyncio.run(main())
+```
+
+### Raw Response Access
+
+Access raw HTTP response data including headers:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto()
+    
+    response = await client.parse.with_raw_response.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+    
+    print(response.headers.get('X-Request-Id'))
+    parse_result = response.parse()  # Get the parsed response object
+
+asyncio.run(main())
+```
+
+### Streaming Response
+
+Stream response data asynchronously for large payloads:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto()
+    
+    async with client.parse.with_streaming_response.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    ) as response:
+        print(response.headers.get("Content-Type"))
+        
+        async for line in response.iter_lines():
+            print(line)
+
+asyncio.run(main())
+```
+
+## Error Handling
+
+The async client raises the same exceptions as the synchronous client:
+
+```python
+import asyncio
+import reducto
+from reducto import AsyncReducto
+
+async def main():
+    client = AsyncReducto()
+    
+    try:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+    except reducto.APIConnectionError as e:
+        print("Network connection error")
+        print(e.__cause__)
+    except reducto.AuthenticationError as e:
+        print("Invalid API key")
+    except reducto.RateLimitError as e:
+        print("Rate limit exceeded")
+    except reducto.APIStatusError as e:
+        print(f"API error: {e.status_code}")
+        print(e.response)
+
+asyncio.run(main())
+```
+
+## Performance Tips
+
+1. **Use aiohttp for high concurrency**: If you're making many concurrent requests, the `aiohttp` client provides better performance than the default `httpx` client.
+
+2. **Reuse the client**: Create one client instance and reuse it across requests to leverage connection pooling.
+
+3. **Use asyncio.gather()**: Process multiple documents concurrently using `asyncio.gather()` for maximum throughput.
+
+4. **Adjust timeout settings**: For long-running operations, increase the timeout to avoid premature failures.
+
+## See Also
+
+- [Reducto Client](/api/client) - Synchronous version of the client
+- [Parse Operations](/api/parse) - Document parsing methods
+- [Extract Operations](/api/extract) - Data extraction methods

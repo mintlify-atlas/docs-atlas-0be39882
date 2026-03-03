@@ -1,0 +1,62 @@
+---
+title: Introduction
+description: Reducto Python SDK provides convenient access to the Reducto REST API for document parsing and processing
+---
+
+# Reducto Python SDK
+
+The Reducto Python library provides convenient access to the Reducto REST API from any Python 3.9+ application. The library includes type definitions for all request params and response fields, and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx).
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Type-Safe API" icon="shield-check">
+    Full type definitions for all request parameters and response fields with Pydantic models and TypedDicts
+  </Card>
+  <Card title="Async & Sync" icon="bolt">
+    Both synchronous and asynchronous clients with support for httpx and aiohttp backends
+  </Card>
+  <Card title="Smart Retries" icon="rotate">
+    Automatic retry handling with exponential backoff for connection errors and rate limits
+  </Card>
+  <Card title="File Uploads" icon="file-arrow-up">
+    Easy file upload support with PathLike instances, bytes, or custom tuples
+  </Card>
+</CardGroup>
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the Reducto Python SDK using pip
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Parse your first document in minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/client">
+    Explore the full API documentation
+  </Card>
+  <Card title="Main Features" icon="book" href="/features/parsing">
+    Learn about parsing, extraction, and more
+  </Card>
+</CardGroup>
+
+## Requirements
+
+- Python 3.9 or higher
+- An API key from [Reducto](https://reducto.ai)
+
+## What You Can Build
+
+With the Reducto Python SDK, you can:
+
+- **Parse documents** from URLs or files into structured data
+- **Extract information** from PDFs, images, and other document formats
+- **Process documents** with advanced enhancement options
+- **Handle large documents** with automatic chunking and splitting
+- **Stream responses** for efficient memory usage
+- **Webhook integration** for asynchronous document processing
+
+## Support
+
+For questions, bugs, or suggestions, please open an [issue on GitHub](https://www.github.com/reductoai/reducto-python-sdk/issues).

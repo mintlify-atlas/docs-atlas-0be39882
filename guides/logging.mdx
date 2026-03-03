@@ -1,0 +1,121 @@
+---
+title: Logging
+description: Configure logging for the Reducto Python SDK using the REDUCTO_LOG environment variable
+---
+
+## Overview
+
+The Reducto Python SDK uses the standard library [`logging`](https://docs.python.org/3/library/logging.html) module to provide visibility into SDK operations and API interactions.
+
+## Enabling Logging
+
+You can enable logging by setting the `REDUCTO_LOG` environment variable.
+
+### Info Level Logging
+
+For general logging information:
+
+```bash
+export REDUCTO_LOG=info
+```
+
+### Debug Level Logging
+
+For more verbose logging, including detailed request and response information:
+
+```bash
+export REDUCTO_LOG=debug
+```
+
+<Info>
+Debug level logging is useful during development and troubleshooting, but should be used cautiously in production as it may log sensitive information.
+</Info>
+
+## Usage Example
+
+Set the environment variable before running your Python application:
+
+```bash
+# Set logging level
+export REDUCTO_LOG=info
+
+# Run your application
+python your_app.py
+```
+
+Or set it inline for a single command:
+
+```bash
+REDUCTO_LOG=debug python your_app.py
+```
+
+## Programmatic Configuration
+
+You can also configure logging programmatically in your Python code using the standard `logging` module:
+
+```python
+import logging
+import os
+from reducto import Reducto
+
+# Configure logging before creating the client
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+)
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+<Tip>
+When debugging API issues, enable debug logging to see detailed information about HTTP requests, including headers, request bodies, and response data.
+</Tip>
+
+## Logging Levels
+
+| Level | Environment Variable | Description |
+|-------|---------------------|-------------|
+| INFO  | `REDUCTO_LOG=info`  | General operational information about SDK usage |
+| DEBUG | `REDUCTO_LOG=debug` | Detailed diagnostic information including request/response details |
+
+## Best Practices
+
+- Use **info** level logging in production for monitoring and operational insights
+- Use **debug** level logging during development and when troubleshooting issues
+- Be mindful that debug logging may include sensitive information in logs
+- Configure log rotation and retention policies appropriately for your environment
+
+## Integration with Application Logging
+
+Since the SDK uses Python's standard logging module, it integrates seamlessly with your application's existing logging configuration:
+
+```python
+import logging
+from reducto import Reducto
+
+# Configure your application logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create a handler (e.g., file handler)
+handler = logging.FileHandler('app.log')
+handler.setLevel(logging.INFO)
+
+# Create a formatter
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+handler.setFormatter(formatter)
+
+# Add handler to the logger
+logger.addHandler(handler)
+
+# The Reducto SDK will use the configured logging setup
+client = Reducto()
+```

@@ -1,0 +1,178 @@
+---
+title: Async Support
+description: Use the AsyncReducto client for asynchronous API calls with httpx or aiohttp backends
+---
+
+## Overview
+
+The Reducto Python SDK provides full asynchronous support through the `AsyncReducto` client. This allows you to make non-blocking API calls using Python's `async`/`await` syntax.
+
+## Basic Async Usage
+
+To use the async client, import `AsyncReducto` instead of `Reducto` and use `await` with each API call:
+
+```python
+import os
+import asyncio
+from reducto import AsyncReducto
+
+client = AsyncReducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),  # This is the default and can be omitted
+    environment="eu",  # or 'production' | 'au'; defaults to "production"
+)
+
+
+async def main() -> None:
+    response = await client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+
+asyncio.run(main())
+```
+
+<Note>
+Functionality between the synchronous and asynchronous clients is otherwise identical.
+</Note>
+
+## HTTP Backends
+
+The async client supports two HTTP backends for different performance characteristics.
+
+### httpx (Default)
+
+By default, the async client uses [httpx](https://github.com/encode/httpx) for HTTP requests. This is included with the standard SDK installation:
+
+```python
+import os
+import asyncio
+from reducto import AsyncReducto
+
+async def main() -> None:
+    client = AsyncReducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+    )
+    
+    response = await client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+asyncio.run(main())
+```
+
+### aiohttp (Advanced)
+
+For improved concurrency performance, you can use `aiohttp` as the HTTP backend instead of `httpx`.
+
+<Steps>
+  <Step title="Install aiohttp">
+    Install the SDK with the `aiohttp` extra:
+    ```bash
+    pip install reductoai[aiohttp]
+    ```
+  </Step>
+  
+  <Step title="Use DefaultAioHttpClient">
+    Enable aiohttp by instantiating the client with `http_client=DefaultAioHttpClient()`:
+    ```python
+    import os
+    import asyncio
+    from reducto import DefaultAioHttpClient
+    from reducto import AsyncReducto
+    
+    
+    async def main() -> None:
+        async with AsyncReducto(
+            api_key=os.environ.get("REDUCTO_API_KEY"),
+            http_client=DefaultAioHttpClient(),
+        ) as client:
+            response = await client.parse.run(
+                input="https://pdfobject.com/pdf/sample.pdf",
+            )
+    
+    
+    asyncio.run(main())
+    ```
+  </Step>
+</Steps>
+
+<Info>
+When using `aiohttp`, it's recommended to use the client as a context manager (with `async with`) to ensure proper cleanup of HTTP resources.
+</Info>
+
+## Comparison: httpx vs aiohttp
+
+<CardGroup cols={2}>
+  <Card title="httpx" icon="bolt">
+    **Default backend**
+    - Included by default
+    - Good for general use
+    - Simpler setup
+    - No context manager required
+  </Card>
+  <Card title="aiohttp" icon="rocket">
+    **Performance backend**
+    - Requires extra installation
+    - Better concurrency performance
+    - Ideal for high-throughput applications
+    - Requires context manager
+  </Card>
+</CardGroup>
+
+## Context Manager Pattern
+
+When using the async client, you can optionally use it as a context manager to ensure proper cleanup:
+
+```python
+import os
+import asyncio
+from reducto import AsyncReducto
+
+
+async def main() -> None:
+    async with AsyncReducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+    ) as client:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+        # Client will automatically close when exiting the context
+
+
+asyncio.run(main())
+```
+
+## Multiple Concurrent Requests
+
+The async client excels at handling multiple concurrent requests:
+
+```python
+import os
+import asyncio
+from reducto import AsyncReducto
+
+
+async def main() -> None:
+    client = AsyncReducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+    )
+    
+    # Process multiple documents concurrently
+    urls = [
+        "https://example.com/document1.pdf",
+        "https://example.com/document2.pdf",
+        "https://example.com/document3.pdf",
+    ]
+    
+    tasks = [client.parse.run(input=url) for url in urls]
+    responses = await asyncio.gather(*tasks)
+    
+    return responses
+
+
+asyncio.run(main())
+```
+
+<Tip>
+Use the async client with `asyncio.gather()` to process multiple documents in parallel for maximum throughput.
+</Tip>

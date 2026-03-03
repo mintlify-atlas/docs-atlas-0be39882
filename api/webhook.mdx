@@ -1,0 +1,63 @@
+---
+title: Webhook
+description: Configure webhooks for asynchronous job notifications
+---
+
+## webhook.run()
+
+Generates a URL to the webhook configuration portal where you can manage your webhook settings.
+
+```python
+portal_url = client.webhook.run()
+print(f"Configure your webhooks at: {portal_url}")
+```
+
+### Parameters
+
+This method takes no parameters.
+
+### Response
+
+<ResponseField name="portal_url" type="string">
+  A URL to the webhook configuration portal where you can:
+  - Set up webhook endpoints
+  - Configure webhook authentication
+  - Manage webhook subscriptions
+  - Test webhook deliveries
+</ResponseField>
+
+## Usage with Async Jobs
+
+When creating asynchronous jobs, you can provide webhook configuration to receive notifications when jobs complete:
+
+```python
+# Using webhook with async job
+response = client.parse.run_job(
+    input="https://example.com/document.pdf",
+    async_={
+        "webhook": {
+            "url": "https://your-app.com/webhook-endpoint",
+            "headers": {
+                "Authorization": "Bearer your-token"
+            }
+        }
+    }
+)
+```
+
+## Webhook Payload
+
+When a job completes, Reducto will send a POST request to your webhook URL with the following payload:
+
+```json
+{
+  "job_id": "your-job-id",
+  "status": "Completed",
+  "result": {
+    // The job result data
+  },
+  "type": "Parse",
+  "created_at": "2024-01-01T00:00:00Z",
+  "duration": 12.5
+}
+```

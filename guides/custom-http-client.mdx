@@ -1,0 +1,146 @@
+---
+title: Custom HTTP Client
+description: Customize the HTTP client with proxies, transports, and advanced httpx configuration
+---
+
+## Overview
+
+You can directly override the [httpx client](https://www.python-httpx.org/api/#client) to customize it for your use case, including:
+
+- Support for [proxies](https://www.python-httpx.org/advanced/proxies/)
+- Custom [transports](https://www.python-httpx.org/advanced/transports/)
+- Additional [advanced](https://www.python-httpx.org/advanced/clients/) functionality
+
+## Basic Configuration
+
+Customize the HTTP client when instantiating the Reducto client:
+
+```python
+import httpx
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto(
+    # Or use the `REDUCTO_BASE_URL` env var
+    base_url="http://my.test.server.example.com:8083",
+    http_client=DefaultHttpxClient(
+        proxy="http://my.test.proxy.example.com",
+        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+    ),
+)
+```
+
+## Per-Request Customization
+
+You can also customize the client on a per-request basis by using `with_options()`:
+
+```python
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto()
+
+# Use custom HTTP client for specific requests
+client.with_options(
+    http_client=DefaultHttpxClient(
+        proxy="http://my.proxy.example.com",
+    )
+).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+## Using aiohttp for Async Clients
+
+By default, the async client uses `httpx` for HTTP requests. However, for improved concurrency performance you may also use `aiohttp` as the HTTP backend.
+
+### Installation
+
+Install the aiohttp extra:
+
+```bash
+pip install reductoai[aiohttp]
+```
+
+### Configuration
+
+Enable aiohttp by instantiating the client with `http_client=DefaultAioHttpClient()`:
+
+```python
+import os
+import asyncio
+from reducto import DefaultAioHttpClient
+from reducto import AsyncReducto
+
+
+async def main() -> None:
+    async with AsyncReducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+        http_client=DefaultAioHttpClient(),
+    ) as client:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+
+
+asyncio.run(main())
+```
+
+<Info>
+Using `aiohttp` instead of `httpx` can provide better concurrency performance for async applications with high request volumes.
+</Info>
+
+## Managing HTTP Resources
+
+By default, the library closes underlying HTTP connections whenever the client is [garbage collected](https://docs.python.org/3/reference/datamodel.html#object.__del__). You can manually close the client using the `.close()` method if desired, or with a context manager that closes when exiting.
+
+```python
+from reducto import Reducto
+
+with Reducto() as client:
+    # make requests here
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+
+# HTTP client is now closed
+```
+
+<Tip>
+Using a context manager ensures that HTTP connections are properly closed, which is especially important in long-running applications or when making many requests.
+</Tip>
+
+## Proxy Configuration
+
+Configure proxy settings through the HTTP client:
+
+```python
+import httpx
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto(
+    http_client=DefaultHttpxClient(
+        proxy="http://my.proxy.example.com:8080",
+    ),
+)
+```
+
+For more advanced proxy configuration options, refer to the [httpx proxy documentation](https://www.python-httpx.org/advanced/proxies/).
+
+## Custom Transports
+
+Use custom transports for advanced networking requirements:
+
+```python
+import httpx
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto(
+    http_client=DefaultHttpxClient(
+        transport=httpx.HTTPTransport(
+            local_address="0.0.0.0",
+            retries=3,
+        ),
+    ),
+)
+```
+
+For more information on custom transports, see the [httpx transports documentation](https://www.python-httpx.org/advanced/transports/).

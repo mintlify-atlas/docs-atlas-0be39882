@@ -1,0 +1,208 @@
+---
+title: "Exceptions"
+description: "Error handling and exception classes in the Reducto Python SDK"
+---
+
+## Overview
+
+The Reducto Python SDK provides a comprehensive set of exception classes to handle different error scenarios. All exceptions inherit from `reducto.APIError`, making it easy to catch all API-related errors.
+
+## Exception Hierarchy
+
+```
+ReductoError (base exception)
+└── APIError
+    ├── APIConnectionError
+    │   └── APITimeoutError
+    ├── APIResponseValidationError
+    └── APIStatusError
+        ├── BadRequestError (400)
+        ├── AuthenticationError (401)
+        ├── PermissionDeniedError (403)
+        ├── NotFoundError (404)
+        ├── ConflictError (409)
+        ├── UnprocessableEntityError (422)
+        ├── RateLimitError (429)
+        └── InternalServerError (>=500)
+```
+
+## Exception Classes
+
+### ReductoError
+
+Base exception class for all Reducto errors.
+
+```python
+class ReductoError(Exception):
+    pass
+```
+
+### APIError
+
+Base class for all API-related errors. Contains information about the request and response.
+
+**Attributes:**
+- `message` (str): Error message describing what went wrong
+- `request` (httpx.Request): The HTTP request that caused the error
+- `body` (object | None): The API response body. If the API responded with valid JSON, this will be the decoded result. Otherwise, it will be the raw response. `None` if there was no response.
+
+### APIConnectionError
+
+Raised when the library is unable to connect to the API (e.g., network connection problems).
+
+**Attributes:**
+- Inherits all attributes from `APIError`
+- Default message: "Connection error."
+
+### APITimeoutError
+
+Raised when a request times out.
+
+**Attributes:**
+- Inherits all attributes from `APIConnectionError`
+- Default message: "Request timed out."
+
+<Note>
+Requests that time out are automatically retried twice by default. See the [Retries](#retries) section for more information.
+</Note>
+
+### APIResponseValidationError
+
+Raised when the API returns data that is invalid for the expected schema.
+
+**Attributes:**
+- `response` (httpx.Response): The HTTP response object
+- `status_code` (int): The HTTP status code
+- Default message: "Data returned by API invalid for expected schema."
+
+### APIStatusError
+
+Raised when an API response has a status code of 4xx or 5xx.
+
+**Attributes:**
+- `response` (httpx.Response): The HTTP response object
+- `status_code` (int): The HTTP status code
+- `message` (str): Error message from the API
+- `body` (object | None): The response body
+
+## HTTP Status Code Exceptions
+
+The following exceptions correspond to specific HTTP status codes:
+
+| Status Code | Exception Class | Description |
+| ----------- | --------------- | ----------- |
+| 400 | `BadRequestError` | The request was malformed or invalid |
+| 401 | `AuthenticationError` | Authentication failed or API key is invalid |
+| 403 | `PermissionDeniedError` | The API key doesn't have permission to perform this operation |
+| 404 | `NotFoundError` | The requested resource was not found |
+| 409 | `ConflictError` | The request conflicts with the current state |
+| 422 | `UnprocessableEntityError` | The request was well-formed but contains semantic errors |
+| 429 | `RateLimitError` | Too many requests; rate limit exceeded |
+| >=500 | `InternalServerError` | Server-side error occurred |
+
+All of these exceptions inherit from `APIStatusError` and include the `status_code`, `response`, and `body` attributes.
+
+## Error Handling Example
+
+Here's how to properly handle errors when using the Reducto SDK:
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.APIConnectionError as e:
+    print("The server could not be reached")
+    print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+except reducto.RateLimitError as e:
+    print("A 429 status code was received; we should back off a bit.")
+except reducto.APIStatusError as e:
+    print("Another non-200-range status code was received")
+    print(e.status_code)
+    print(e.response)
+```
+
+## Retries
+
+Certain errors are automatically retried 2 times by default with a short exponential backoff:
+
+- Connection errors (network connectivity issues)
+- 408 Request Timeout
+- 409 Conflict
+- 429 Rate Limit
+- >=500 Internal Server Errors
+
+You can configure retry behavior:
+
+```python
+from reducto import Reducto
+
+# Configure the default for all requests:
+client = Reducto(
+    max_retries=0,  # default is 2
+)
+
+# Or, configure per-request:
+client.with_options(max_retries=5).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+## Best Practices
+
+1. **Catch specific exceptions first**: Always catch more specific exceptions (like `RateLimitError`) before catching general ones (like `APIStatusError` or `APIError`).
+
+2. **Handle connection errors**: Network issues are common, so always handle `APIConnectionError` and `APITimeoutError`.
+
+3. **Inspect error details**: Use the `status_code`, `response`, and `body` attributes to get detailed information about what went wrong.
+
+4. **Implement backoff for rate limits**: When catching `RateLimitError`, implement an exponential backoff strategy before retrying.
+
+5. **Log error context**: The `request` attribute on all API errors contains the original request, which is useful for debugging.
+
+## Example: Robust Error Handling
+
+```python
+import reducto
+from reducto import Reducto
+import time
+
+client = Reducto()
+
+def parse_with_retry(input_url: str, max_attempts: int = 3):
+    for attempt in range(max_attempts):
+        try:
+            return client.parse.run(input=input_url)
+        except reducto.RateLimitError as e:
+            if attempt < max_attempts - 1:
+                # Exponential backoff
+                wait_time = 2 ** attempt
+                print(f"Rate limited. Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+            else:
+                raise
+        except reducto.APIConnectionError as e:
+            print(f"Connection error: {e}")
+            if attempt < max_attempts - 1:
+                time.sleep(1)
+            else:
+                raise
+        except reducto.AuthenticationError as e:
+            # Don't retry authentication errors
+            print(f"Authentication failed: {e}")
+            raise
+        except reducto.APIStatusError as e:
+            print(f"API error {e.status_code}: {e.message}")
+            raise
+
+# Usage
+try:
+    result = parse_with_retry("https://pdfobject.com/pdf/sample.pdf")
+except reducto.APIError as e:
+    print(f"Failed after all retries: {e}")
+```

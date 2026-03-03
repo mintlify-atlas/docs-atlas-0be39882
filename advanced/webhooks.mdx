@@ -1,0 +1,206 @@
+---
+title: 'Webhooks'
+description: 'Configure webhooks to receive notifications when document processing is complete'
+---
+
+## Overview
+
+Webhooks allow you to receive real-time notifications when asynchronous document processing jobs are completed. The Reducto SDK supports both Svix-managed webhooks (recommended for production) and direct webhooks.
+
+## Webhook Configuration Portal
+
+The easiest way to configure webhooks is through the webhook configuration portal:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Get the webhook configuration portal URL
+portal_url = client.webhook.run()
+print(f"Configure webhooks at: {portal_url}")
+```
+
+This returns a URL where you can manage your webhook endpoints through an intuitive interface.
+
+## Webhook Modes
+
+Reducto supports three webhook modes:
+
+### 1. Disabled (Default)
+
+Webhooks are disabled by default:
+
+```python
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+    webhook={
+        "mode": "disabled"
+    }
+)
+```
+
+### 2. Svix Mode (Recommended)
+
+Svix provides enterprise-grade webhook delivery with automatic retries, monitoring, and debugging. This is the recommended mode for production:
+
+```python
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+    webhook={
+        "mode": "svix",
+        "metadata": {
+            "user_id": "12345",
+            "document_type": "invoice"
+        },
+        "channels": ["production"]  # Optional: deliver to specific channels
+    }
+)
+```
+
+### 3. Direct Mode
+
+For simple use cases, you can send webhooks directly to a URL:
+
+```python
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+    webhook={
+        "mode": "direct",
+        "url": "https://your-domain.com/webhook-endpoint",
+        "metadata": {
+            "job_id": "abc123"
+        }
+    }
+)
+```
+
+<Warning>
+  Direct webhooks do not include automatic retries or delivery guarantees. Use Svix mode for production applications.
+</Warning>
+
+## Webhook Payload
+
+When a job completes, Reducto sends a POST request to your webhook URL with the following payload:
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "completed",
+  "result": {
+    // Full parse result object
+  },
+  "metadata": {
+    // Your custom metadata
+  }
+}
+```
+
+## Using Channels (Svix Mode)
+
+Channels allow you to route webhooks to different endpoints based on environment or purpose:
+
+```python
+# Send to production channel
+response = client.parse.run(
+    input="document.pdf",
+    webhook={
+        "mode": "svix",
+        "channels": ["production"]
+    }
+)
+
+# Send to multiple channels
+response = client.parse.run(
+    input="document.pdf",
+    webhook={
+        "mode": "svix",
+        "channels": ["production", "analytics"]
+    }
+)
+
+# Omit channels to send to all configured endpoints
+response = client.parse.run(
+    input="document.pdf",
+    webhook={
+        "mode": "svix"
+    }
+)
+```
+
+## Custom Metadata
+
+Include custom metadata in webhook requests to help identify and route the response:
+
+```python
+response = client.parse.run(
+    input="invoice.pdf",
+    webhook={
+        "mode": "svix",
+        "metadata": {
+            "user_id": "user_123",
+            "organization_id": "org_456",
+            "document_type": "invoice",
+            "priority": "high"
+        }
+    }
+)
+```
+
+The metadata will be included in the webhook request body, allowing you to route and process the webhook appropriately.
+
+## Async Usage
+
+Webhook configuration works identically with the async client:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+client = AsyncReducto()
+
+async def main():
+    # Get webhook portal
+    portal_url = await client.webhook.run()
+    print(f"Configure webhooks at: {portal_url}")
+    
+    # Submit job with webhook
+    response = await client.parse.run(
+        input="document.pdf",
+        webhook={
+            "mode": "svix",
+            "metadata": {"async_job": True}
+        }
+    )
+
+asyncio.run(main())
+```
+
+## Webhook Security
+
+When using Svix mode, webhook requests are signed with a secret key. You can verify the signature to ensure the webhook is authentic. See the [Svix documentation](https://docs.svix.com/receiving/verifying-payloads/how) for details on signature verification.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Svix for Production">
+    Svix mode provides automatic retries, delivery monitoring, and debugging tools that are essential for production applications.
+  </Accordion>
+  
+  <Accordion title="Include Identifying Metadata">
+    Always include metadata that helps you identify and route the webhook response, such as user IDs, job IDs, or document types.
+  </Accordion>
+  
+  <Accordion title="Handle Idempotency">
+    Your webhook endpoint should be idempotent, as you may receive the same webhook multiple times due to retries.
+  </Accordion>
+  
+  <Accordion title="Respond Quickly">
+    Your webhook endpoint should respond with a 2xx status code within a few seconds. Perform any heavy processing asynchronously.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+- [Job Management](/advanced/job-management) - Track and manage asynchronous jobs
+- [Async Support](/concepts/async-support) - Learn about async patterns in the SDK

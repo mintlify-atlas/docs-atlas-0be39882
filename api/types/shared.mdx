@@ -1,0 +1,100 @@
+---
+title: Shared Types
+description: Common types used across Reducto API
+---
+
+## BoundingBox
+
+Represents the location and dimensions of an element in a document.
+
+<ResponseField name="height" type="float" required>
+  Height of the bounding box.
+</ResponseField>
+
+<ResponseField name="left" type="float" required>
+  Left coordinate of the bounding box.
+</ResponseField>
+
+<ResponseField name="page" type="integer" required>
+  The page number of the bounding box (1-indexed).
+</ResponseField>
+
+<ResponseField name="top" type="float" required>
+  Top coordinate of the bounding box.
+</ResponseField>
+
+<ResponseField name="width" type="float" required>
+  Width of the bounding box.
+</ResponseField>
+
+<ResponseField name="original_page" type="integer">
+  The page number in the original document of the bounding box (1-indexed).
+</ResponseField>
+
+## PageRange
+
+Specifies a range of pages to process.
+
+<ResponseField name="start" type="integer">
+  The page number to start processing from (1-indexed).
+</ResponseField>
+
+<ResponseField name="end" type="integer">
+  The page number to stop processing at (1-indexed).
+</ResponseField>
+
+## ParseUsage
+
+Usage information for parsing operations.
+
+<ResponseField name="num_pages" type="integer" required>
+  Number of pages processed.
+</ResponseField>
+
+<ResponseField name="credits" type="float">
+  Credits consumed for this operation.
+</ResponseField>
+
+## ExtractUsage
+
+Usage information for extraction operations.
+
+<ResponseField name="num_fields" type="integer" required>
+  Number of fields extracted.
+</ResponseField>
+
+<ResponseField name="num_pages" type="integer" required>
+  Number of pages processed.
+</ResponseField>
+
+<ResponseField name="credits" type="float">
+  Credits consumed for this operation.
+</ResponseField>
+
+## Upload
+
+Response from file upload operations.
+
+<ResponseField name="file_id" type="string" required>
+  Unique identifier for the uploaded file.
+</ResponseField>
+
+<ResponseField name="presigned_url" type="string">
+  Presigned URL for uploading the file directly to storage.
+</ResponseField>
+
+## SplitCategory
+
+Defines a category for document splitting.
+
+<ResponseField name="description" type="string" required>
+  Description of the split category.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Name of the split category.
+</ResponseField>
+
+<ResponseField name="partition_key" type="string">
+  Optional partition key for the category.
+</ResponseField>

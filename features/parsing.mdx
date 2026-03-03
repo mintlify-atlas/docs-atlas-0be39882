@@ -1,0 +1,227 @@
+---
+title: Document Parsing
+description: Parse documents to extract structured content with parse.run()
+---
+
+The Parse API converts documents into structured content, extracting text, tables, images, and layouts with high accuracy.
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.parse.run(
+        input="https://example.com/document.pdf"
+    )
+    print(response)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.parse.run(
+            input="https://example.com/document.pdf"
+        )
+        print(response)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Method Signature
+
+```python
+client.parse.run(
+    input: str,
+    enhance: Enhance | None = None,
+    formatting: Formatting | None = None,
+    retrieval: Retrieval | None = None,
+    settings: Settings | None = None,
+    spreadsheet: Spreadsheet | None = None,
+    async_: ConfigV3AsyncConfig | None = None
+) -> ParseRunResponse
+```
+
+## Parameters
+
+<ParamField path="input" type="string" required>
+  The URL of the document to parse. You can provide:
+  - A publicly available URL
+  - A presigned S3 URL
+  - A `reducto://` prefixed URL from the `/upload` endpoint
+  - A `jobid://` prefixed URL from a previous parse invocation
+  - A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="enhance" type="Enhance">
+  Enhancement options for improving extraction accuracy.
+
+  <Expandable title="properties">
+    <ParamField path="agentic" type="array">
+      Uses vision language models to enhance accuracy for tables, figures, or text. Increases cost and latency.
+    </ParamField>
+
+    <ParamField path="summarize_figures" type="boolean" default="true">
+      If true, summarize figures using a small vision language model.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="formatting" type="Formatting">
+  Control output formatting and structure.
+
+  <Expandable title="properties">
+    <ParamField path="add_page_markers" type="boolean" default="false">
+      Add page markers to the output. Useful for extracting data with page-specific information.
+    </ParamField>
+
+    <ParamField path="table_output_format" type="enum" default="dynamic">
+      Format for table output: `html`, `json`, `md`, `jsonbbox`, `dynamic`, or `csv`.
+      Dynamic returns markdown for simple tables and HTML for complex tables.
+    </ParamField>
+
+    <ParamField path="merge_tables" type="boolean" default="false">
+      Merge consecutive tables with the same number of columns.
+    </ParamField>
+
+    <ParamField path="include" type="array">
+      List of formatting elements to include: `change_tracking`, `highlight`, `comments`, `hyperlinks`, `signatures`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="retrieval" type="Retrieval">
+  Configure chunking for retrieval-optimized output.
+</ParamField>
+
+<ParamField path="settings" type="Settings">
+  Processing settings and preferences.
+</ParamField>
+
+<ParamField path="spreadsheet" type="Spreadsheet">
+  Spreadsheet-specific parsing options.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig">
+  Configuration for asynchronous processing. When provided, the request returns immediately with a job ID.
+</ParamField>
+
+## Advanced Example
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.parse.run(
+        input="https://example.com/document.pdf",
+        enhance={
+            "summarize_figures": True,
+            "agentic": ["table", "figure"]
+        },
+        formatting={
+            "add_page_markers": True,
+            "table_output_format": "json",
+            "merge_tables": False
+        }
+    )
+
+    # Access the parsed content
+    print(response.content)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.parse.run(
+            input="https://example.com/document.pdf",
+            enhance={
+                "summarize_figures": True,
+                "agentic": ["table", "figure"]
+            },
+            formatting={
+                "add_page_markers": True,
+                "table_output_format": "json",
+                "merge_tables": False
+            }
+        )
+
+        # Access the parsed content
+        print(response.content)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Async Job Processing
+
+For long-running documents, use `run_job()` to process asynchronously:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Start an async job
+job = client.parse.run_job(
+    input="https://example.com/large-document.pdf",
+    async_={"webhook": {"url": "https://example.com/webhook"}}
+)
+
+print(f"Job ID: {job.job_id}")
+
+# Poll for results
+result = client.job.get(job.job_id)
+```
+
+## Input Formats
+
+The Parse API supports multiple input methods:
+
+### Direct URL
+```python
+response = client.parse.run(
+    input="https://example.com/document.pdf"
+)
+```
+
+### File Upload
+```python
+from pathlib import Path
+
+# First upload the file
+upload_response = client.upload(
+    file=Path("/path/to/document.pdf")
+)
+
+# Then parse using the reducto:// URL
+response = client.parse.run(
+    input=upload_response.url
+)
+```
+
+### Reuse Previous Parse
+```python
+# Use output from a previous parse job
+response = client.parse.run(
+    input=f"jobid://{previous_job_id}"
+)
+```

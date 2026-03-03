@@ -1,0 +1,117 @@
+---
+title: Environments
+description: Configure the Reducto API environment for your region
+---
+
+## Overview
+
+The Reducto Python SDK supports multiple environments to serve different geographic regions. You can specify which environment to use when initializing the client.
+
+## Available Environments
+
+The SDK supports the following environments:
+
+<CardGroup cols={3}>
+  <Card title="Production" icon="server">
+    Default US production environment
+  </Card>
+  <Card title="EU" icon="globe">
+    European Union region
+  </Card>
+  <Card title="AU" icon="earth-oceania">
+    Australia region
+  </Card>
+</CardGroup>
+
+## Configuration
+
+### Setting the Environment
+
+Specify the environment using the `environment` parameter when initializing the client:
+
+```python
+from reducto import Reducto
+
+client = Reducto(
+    environment="eu",  # or 'production' | 'au'; defaults to "production"
+)
+```
+
+### Environment Options
+
+<ParamField path="environment" type="string" default="production">
+  The API environment to use. Valid values are:
+  - `"production"` - US production environment (default)
+  - `"eu"` - European Union region
+  - `"au"` - Australia region
+</ParamField>
+
+## Examples
+
+### Production (Default)
+
+```python
+import os
+from reducto import Reducto
+
+# Explicitly set to production
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="production",
+)
+
+# Or omit the parameter (defaults to production)
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+)
+```
+
+### European Union
+
+```python
+import os
+from reducto import Reducto
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="eu",
+)
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+### Australia
+
+```python
+import os
+from reducto import Reducto
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="au",
+)
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+## Async Client
+
+The async client supports the same environment configuration:
+
+```python
+import os
+from reducto import AsyncReducto
+
+client = AsyncReducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="eu",
+)
+```
+
+<Note>
+Choose the environment closest to your geographic location for optimal performance and latency.
+</Note>

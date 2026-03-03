@@ -1,0 +1,138 @@
+---
+title: 'Streaming Responses'
+description: 'Stream API responses to efficiently handle large payloads'
+---
+
+## Overview
+
+By default, the Reducto SDK eagerly reads the full response body when you make a request. For large responses, you can use `.with_streaming_response` to stream the response body instead.
+
+## Why Use Streaming?
+
+Streaming responses is useful when:
+- You're processing large documents with extensive output
+- You want to start processing data before the full response arrives
+- You need to manage memory usage more efficiently
+- You want access to response headers before reading the body
+
+## Basic Usage
+
+The `.with_streaming_response` method requires a context manager and only reads the response body when you explicitly call methods like `.read()`, `.text()`, `.json()`, `.iter_bytes()`, `.iter_text()`, `.iter_lines()` or `.parse()`:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    print(response.headers.get("X-My-Header"))
+
+    for line in response.iter_lines():
+        print(line)
+```
+
+<Warning>
+  The context manager is required so that the response will reliably be closed.
+</Warning>
+
+## Streaming Methods
+
+### Iterate Lines
+
+Process the response line by line:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    for line in response.iter_lines():
+        process_line(line)
+```
+
+### Iterate Bytes
+
+Process the response as chunks of bytes:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    for chunk in response.iter_bytes():
+        process_chunk(chunk)
+```
+
+### Iterate Text
+
+Process the response as text chunks:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    for text_chunk in response.iter_text():
+        process_text(text_chunk)
+```
+
+### Parse Full Response
+
+If you need the full parsed response object after accessing headers:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    # Access headers first
+    print(response.headers.get("X-My-Header"))
+    
+    # Then parse the full response
+    parse_result = response.parse()
+    print(parse_result)
+```
+
+## Async Streaming
+
+In the async client, streaming methods are async and must be awaited:
+
+```python
+import asyncio
+from reducto import AsyncReducto
+
+client = AsyncReducto()
+
+async def main():
+    async with client.parse.with_streaming_response.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    ) as response:
+        print(response.headers.get("X-My-Header"))
+        
+        async for line in response.iter_lines():
+            print(line)
+
+asyncio.run(main())
+```
+
+## Accessing Headers
+
+One of the main benefits of streaming is accessing response headers before reading the body:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    # Access any header
+    content_type = response.headers.get("Content-Type")
+    content_length = response.headers.get("Content-Length")
+    
+    print(f"Response type: {content_type}")
+    print(f"Response size: {content_length} bytes")
+    
+    # Then process the body
+    result = response.parse()
+```
+
+## Related
+
+- Learn more about async patterns in [Async Support](/concepts/async-support)
+- See [API Client](/api/client) for raw response access methods

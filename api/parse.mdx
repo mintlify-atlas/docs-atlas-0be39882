@@ -1,0 +1,135 @@
+---
+title: Parse
+description: Parse documents into structured markdown with the Reducto Parse API
+---
+
+## parse.run()
+
+Parses a document synchronously and returns the result immediately.
+
+```python
+client.parse.run(
+    input="https://example.com/document.pdf",
+    enhance={...},
+    formatting={...},
+    retrieval={...},
+    settings={...},
+    spreadsheet={...}
+)
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="enhance" type="Enhance" optional>
+  Enhancement options for the parsing process.
+</ParamField>
+
+<ParamField path="formatting" type="Formatting" optional>
+  Formatting configuration for the output.
+</ParamField>
+
+<ParamField path="retrieval" type="Retrieval" optional>
+  Retrieval configuration options.
+</ParamField>
+
+<ParamField path="settings" type="Settings" optional>
+  General settings for the parsing process.
+</ParamField>
+
+<ParamField path="spreadsheet" type="Spreadsheet" optional>
+  Spreadsheet-specific parsing options.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous). Only available when using async mode.
+</ParamField>
+
+### Response
+
+<ResponseField name="ParseRunResponse" type="ParseResponse | AsyncParseResponse">
+  Returns either a `ParseResponse` with the parsed document content (sync mode) or an `AsyncParseResponse` containing a `job_id` (async mode).
+
+  <Expandable title="ParseResponse">
+    <ResponseField name="result" type="object">
+      The parsed document content in the requested format.
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="AsyncParseResponse">
+    <ResponseField name="job_id" type="string">
+      The ID of the asynchronous job. Use this to retrieve the result later with `job.get()`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## parse.run_job()
+
+Parses a document asynchronously and returns a job ID immediately.
+
+```python
+response = client.parse.run_job(
+    input="https://example.com/document.pdf",
+    async_={"webhook": {"url": "https://example.com/webhook"}},
+    enhance={...},
+    formatting={...},
+    retrieval={...},
+    settings={...},
+    spreadsheet={...}
+)
+
+print(response.job_id)  # Use this to check job status later
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous).
+</ParamField>
+
+<ParamField path="enhance" type="Enhance" optional>
+  Enhancement options for the parsing process.
+</ParamField>
+
+<ParamField path="formatting" type="Formatting" optional>
+  Formatting configuration for the output.
+</ParamField>
+
+<ParamField path="retrieval" type="Retrieval" optional>
+  Retrieval configuration options.
+</ParamField>
+
+<ParamField path="settings" type="Settings" optional>
+  General settings for the parsing process.
+</ParamField>
+
+<ParamField path="spreadsheet" type="Spreadsheet" optional>
+  Spreadsheet-specific parsing options.
+</ParamField>
+
+### Response
+
+<ResponseField name="ParseRunJobResponse" type="object">
+  <ResponseField name="job_id" type="string">
+    The ID of the asynchronous job. Use `client.job.get(job_id)` to retrieve the result when the job completes.
+  </ResponseField>
+</ResponseField>

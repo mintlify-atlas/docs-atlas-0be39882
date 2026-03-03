@@ -1,0 +1,315 @@
+---
+title: Document Splitting
+description: Split documents into categorized sections with split.run()
+---
+
+The Split API intelligently divides documents into sections based on content categories, making it easy to organize and process different parts of a document separately.
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.split.run(
+        input="https://example.com/document.pdf",
+        split_description=[
+            {"name": "summary", "description": "Executive summary section"},
+            {"name": "financials", "description": "Financial data and tables"},
+            {"name": "risks", "description": "Risk factors and disclosures"}
+        ]
+    )
+    print(response)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.split.run(
+            input="https://example.com/document.pdf",
+            split_description=[
+                {"name": "summary", "description": "Executive summary section"},
+                {"name": "financials", "description": "Financial data and tables"},
+                {"name": "risks", "description": "Risk factors and disclosures"}
+            ]
+        )
+        print(response)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Method Signature
+
+```python
+client.split.run(
+    input: str,
+    split_description: list[SplitCategory],
+    parsing: ParseOptions | None = None,
+    settings: dict | None = None,
+    split_rules: str | None = None
+) -> SplitResponse
+```
+
+## Parameters
+
+<ParamField path="input" type="string" required>
+  The URL of the document to split. You can provide:
+  - A publicly available URL
+  - A presigned S3 URL
+  - A `reducto://` prefixed URL from the `/upload` endpoint
+  - A `jobid://` prefixed URL from a previous parse invocation
+  - A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="split_description" type="array" required>
+  List of category definitions for splitting the document. Each category should have:
+  - `name`: Category identifier
+  - `description`: Description of what content belongs in this category
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions">
+  Configuration options for parsing the document. If you're passing in a `jobid://` URL, this will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object">
+  Settings for split processing.
+</ParamField>
+
+<ParamField path="split_rules" type="string">
+  Natural language prompt describing rules for splitting the document.
+</ParamField>
+
+## Split Categories
+
+Define categories based on document structure:
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    categories = [
+        {
+            "name": "introduction",
+            "description": "Opening remarks and overview"
+        },
+        {
+            "name": "methodology",
+            "description": "Research methods and approach"
+        },
+        {
+            "name": "results",
+            "description": "Findings, data, and analysis"
+        },
+        {
+            "name": "conclusion",
+            "description": "Summary and final thoughts"
+        }
+    ]
+
+    response = client.split.run(
+        input="https://example.com/research-paper.pdf",
+        split_description=categories
+    )
+
+    # Access split sections
+    for section in response.sections:
+        print(f"{section.category}: {len(section.content)} chars")
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        categories = [
+            {
+                "name": "introduction",
+                "description": "Opening remarks and overview"
+            },
+            {
+                "name": "methodology",
+                "description": "Research methods and approach"
+            },
+            {
+                "name": "results",
+                "description": "Findings, data, and analysis"
+            },
+            {
+                "name": "conclusion",
+                "description": "Summary and final thoughts"
+            }
+        ]
+
+        response = await client.split.run(
+            input="https://example.com/research-paper.pdf",
+            split_description=categories
+        )
+
+        # Access split sections
+        for section in response.sections:
+            print(f"{section.category}: {len(section.content)} chars")
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Custom Split Rules
+
+Add natural language rules to guide the splitting process:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.split.run(
+    input="https://example.com/contract.pdf",
+    split_description=[
+        {"name": "terms", "description": "Terms and conditions"},
+        {"name": "pricing", "description": "Pricing and payment terms"},
+        {"name": "warranties", "description": "Warranties and guarantees"}
+    ],
+    split_rules="Split at major section boundaries. Keep related clauses together. Preserve the hierarchy of subsections."
+)
+```
+
+## Split with Parsing Options
+
+Combine splitting with custom parsing configuration:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.split.run(
+    input="https://example.com/document.pdf",
+    split_description=[
+        {"name": "text_sections", "description": "Text-heavy sections"},
+        {"name": "data_sections", "description": "Sections with tables and charts"}
+    ],
+    parsing={
+        "enhance": {
+            "summarize_figures": True,
+            "agentic": ["table"]
+        },
+        "formatting": {
+            "table_output_format": "json",
+            "add_page_markers": True
+        }
+    }
+)
+```
+
+## Async Job Processing
+
+For large documents, use async job processing:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Start an async split job
+job = client.split.run_job(
+    input="https://example.com/large-document.pdf",
+    split_description=[
+        {"name": "section1", "description": "First section"},
+        {"name": "section2", "description": "Second section"}
+    ],
+    async_={
+        "webhook": {"url": "https://example.com/webhook"}
+    }
+)
+
+print(f"Job ID: {job.job_id}")
+
+# Poll for results
+result = client.job.get(job.job_id)
+```
+
+## Financial Document Example
+
+Split a financial report into meaningful sections:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+categories = [
+    {
+        "name": "executive_summary",
+        "description": "High-level overview and key highlights"
+    },
+    {
+        "name": "financial_statements",
+        "description": "Income statement, balance sheet, cash flow"
+    },
+    {
+        "name": "md_and_a",
+        "description": "Management discussion and analysis"
+    },
+    {
+        "name": "footnotes",
+        "description": "Accounting notes and disclosures"
+    },
+    {
+        "name": "risk_factors",
+        "description": "Risk disclosures and forward-looking statements"
+    }
+]
+
+response = client.split.run(
+    input="https://example.com/annual-report.pdf",
+    split_description=categories,
+    split_rules="Preserve table integrity. Keep footnote references with their corresponding sections."
+)
+
+# Process each section separately
+for section in response.sections:
+    print(f"\n=== {section.category.upper()} ===")
+    print(section.content[:200] + "...")
+```
+
+## Reusing Parsed Documents
+
+Split a document that was previously parsed:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# First parse the document
+parse_response = client.parse.run(
+    input="https://example.com/document.pdf",
+    formatting={"add_page_markers": True}
+)
+
+# Then split using the job ID (no re-parsing needed)
+split_response = client.split.run(
+    input=f"jobid://{parse_response.job_id}",
+    split_description=[
+        {"name": "part1", "description": "First part"},
+        {"name": "part2", "description": "Second part"}
+    ]
+)
+```

@@ -1,0 +1,311 @@
+---
+title: Document Editing
+description: Edit and transform documents with edit.run()
+---
+
+The Edit API allows you to programmatically modify documents using natural language instructions, enabling automated document transformations and updates.
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.edit.run(
+        document_url="https://example.com/document.pdf",
+        edit_instructions="Replace all instances of 'Company A' with 'Company B'"
+    )
+    print(response)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.edit.run(
+            document_url="https://example.com/document.pdf",
+            edit_instructions="Replace all instances of 'Company A' with 'Company B'"
+        )
+        print(response)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Method Signature
+
+```python
+client.edit.run(
+    document_url: str,
+    edit_instructions: str,
+    edit_options: dict | None = None,
+    form_schema: list | None = None,
+    priority: bool | None = None
+) -> EditResponse
+```
+
+## Parameters
+
+<ParamField path="document_url" type="string" required>
+  The URL of the document to edit. You can provide:
+  - A publicly available URL
+  - A presigned S3 URL
+  - A `reducto://` prefixed URL from the `/upload` endpoint
+</ParamField>
+
+<ParamField path="edit_instructions" type="string" required>
+  Natural language instructions describing the edits to make to the document.
+</ParamField>
+
+<ParamField path="edit_options" type="object">
+  Additional options to control the editing process.
+</ParamField>
+
+<ParamField path="form_schema" type="array">
+  Form schema for PDF forms. List of widgets with their types, descriptions, and bounding boxes. Only works for PDFs.
+</ParamField>
+
+<ParamField path="priority" type="boolean" default="false">
+  If true, attempts to process the job with priority if the user has priority processing budget available. By default, sync jobs are prioritized above async jobs.
+</ParamField>
+
+## Text Replacement
+
+Replace text throughout the document:
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.edit.run(
+        document_url="https://example.com/contract.pdf",
+        edit_instructions="""
+        1. Replace 'John Doe' with 'Jane Smith'
+        2. Update the date from '2023-01-01' to '2024-01-01'
+        3. Change the contract value from '$100,000' to '$150,000'
+        """
+    )
+
+    # Download the edited document
+    print(response.output_url)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.edit.run(
+            document_url="https://example.com/contract.pdf",
+            edit_instructions="""
+            1. Replace 'John Doe' with 'Jane Smith'
+            2. Update the date from '2023-01-01' to '2024-01-01'
+            3. Change the contract value from '$100,000' to '$150,000'
+            """
+        )
+
+        # Download the edited document
+        print(response.output_url)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Form Filling
+
+Fill out PDF forms programmatically:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.edit.run(
+    document_url="https://example.com/form.pdf",
+    edit_instructions="Fill in the form with the following information: Name: Alice Johnson, Date: 2024-03-15, Amount: $5000",
+    form_schema=[
+        {
+            "type": "text",
+            "description": "Name field",
+            "bbox": [100, 100, 300, 120]
+        },
+        {
+            "type": "text",
+            "description": "Date field",
+            "bbox": [100, 150, 300, 170]
+        },
+        {
+            "type": "text",
+            "description": "Amount field",
+            "bbox": [100, 200, 300, 220]
+        }
+    ]
+)
+
+print(f"Edited form: {response.output_url}")
+```
+
+## Content Redaction
+
+Redact sensitive information from documents:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.edit.run(
+    document_url="https://example.com/confidential.pdf",
+    edit_instructions="""
+    Redact all of the following:
+    - Social Security Numbers
+    - Phone numbers
+    - Email addresses
+    - Credit card numbers
+    Replace them with '[REDACTED]'
+    """
+)
+
+print(f"Redacted document: {response.output_url}")
+```
+
+## Document Formatting
+
+Apply formatting changes to documents:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.edit.run(
+    document_url="https://example.com/report.pdf",
+    edit_instructions="""
+    1. Make all section headings bold
+    2. Add page numbers to the footer
+    3. Change the font of body text to Arial 11pt
+    4. Add a table of contents on page 2
+    """,
+    edit_options={
+        "preserve_layout": True
+    }
+)
+```
+
+## Priority Processing
+
+Use priority processing for urgent edits:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.edit.run(
+    document_url="https://example.com/urgent.pdf",
+    edit_instructions="Update the delivery date to 2024-03-20",
+    priority=True
+)
+```
+
+## Async Job Processing
+
+For large documents or batch processing, use async jobs:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Start an async edit job
+job = client.edit.run_job(
+    document_url="https://example.com/large-document.pdf",
+    edit_instructions="Apply corporate branding updates throughout the document",
+    webhook={
+        "url": "https://example.com/webhook"
+    }
+)
+
+print(f"Job ID: {job.job_id}")
+
+# Poll for results
+result = client.job.get(job.job_id)
+print(f"Edited document: {result.output_url}")
+```
+
+## Batch Edits Example
+
+Apply consistent edits across multiple documents:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+documents = [
+    "https://example.com/doc1.pdf",
+    "https://example.com/doc2.pdf",
+    "https://example.com/doc3.pdf"
+]
+
+edit_instructions = """
+Update company branding:
+1. Replace old logo with new logo
+2. Update company address to '123 New Street, City, State 12345'
+3. Change contact email to 'info@newdomain.com'
+"""
+
+jobs = []
+for doc_url in documents:
+    job = client.edit.run_job(
+        document_url=doc_url,
+        edit_instructions=edit_instructions
+    )
+    jobs.append(job)
+
+print(f"Started {len(jobs)} edit jobs")
+
+# Check job statuses
+for job in jobs:
+    result = client.job.get(job.job_id)
+    print(f"Job {job.job_id}: {result.status}")
+```
+
+## Upload and Edit
+
+Upload a local file and edit it:
+
+```python
+from reducto import Reducto
+from pathlib import Path
+
+client = Reducto()
+
+# Upload the document
+upload_response = client.upload(
+    file=Path("/path/to/document.pdf")
+)
+
+# Edit the uploaded document
+edit_response = client.edit.run(
+    document_url=upload_response.url,
+    edit_instructions="Remove all comments and track changes from the document"
+)
+
+print(f"Cleaned document: {edit_response.output_url}")
+```

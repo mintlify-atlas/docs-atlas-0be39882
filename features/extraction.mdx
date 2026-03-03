@@ -1,0 +1,296 @@
+---
+title: Structured Data Extraction
+description: Extract structured data from documents with extract.run()
+---
+
+The Extract API allows you to extract specific structured data from documents using natural language instructions or schemas.
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    response = client.extract.run(
+        input="https://example.com/invoice.pdf",
+        instructions={
+            "schema": {
+                "invoice_number": "string",
+                "date": "string",
+                "total_amount": "number",
+                "line_items": "array"
+            }
+        }
+    )
+    print(response)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        response = await client.extract.run(
+            input="https://example.com/invoice.pdf",
+            instructions={
+                "schema": {
+                    "invoice_number": "string",
+                    "date": "string",
+                    "total_amount": "number",
+                    "line_items": "array"
+                }
+            }
+        )
+        print(response)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Method Signature
+
+```python
+client.extract.run(
+    input: str,
+    instructions: dict | None = None,
+    parsing: ParseOptions | None = None,
+    settings: dict | None = None,
+    async_: ConfigV3AsyncConfig | None = None
+) -> ExtractRunResponse
+```
+
+## Parameters
+
+<ParamField path="input" type="string" required>
+  The URL of the document to extract from. You can provide:
+  - A publicly available URL
+  - A presigned S3 URL
+  - A `reducto://` prefixed URL from the `/upload` endpoint
+  - A `jobid://` prefixed URL from a previous parse invocation
+  - A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="instructions" type="object">
+  Instructions for data extraction. Can be either:
+  - A schema object defining the structure to extract
+  - Natural language instructions describing what to extract
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions">
+  Configuration options for parsing the document. If you're passing in a `jobid://` URL, this will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object">
+  Settings to control the extraction process.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig">
+  Configuration for asynchronous processing. When provided, returns immediately with a job ID.
+</ParamField>
+
+## Schema-Based Extraction
+
+Define a schema to extract specific fields:
+
+<Tabs>
+  <Tab title="Sync">
+    ```python
+    from reducto import Reducto
+
+    client = Reducto()
+
+    # Define extraction schema
+    schema = {
+        "company_name": "string",
+        "revenue": "number",
+        "employees": "number",
+        "founded_date": "string",
+        "headquarters": {
+            "city": "string",
+            "country": "string"
+        }
+    }
+
+    response = client.extract.run(
+        input="https://example.com/company-report.pdf",
+        instructions={"schema": schema}
+    )
+
+    # Access extracted data
+    print(response.data)
+    ```
+  </Tab>
+  <Tab title="Async">
+    ```python
+    import asyncio
+    from reducto import AsyncReducto
+
+    client = AsyncReducto()
+
+    async def main():
+        # Define extraction schema
+        schema = {
+            "company_name": "string",
+            "revenue": "number",
+            "employees": "number",
+            "founded_date": "string",
+            "headquarters": {
+                "city": "string",
+                "country": "string"
+            }
+        }
+
+        response = await client.extract.run(
+            input="https://example.com/company-report.pdf",
+            instructions={"schema": schema}
+        )
+
+        # Access extracted data
+        print(response.data)
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Natural Language Instructions
+
+Use natural language to describe what to extract:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.extract.run(
+    input="https://example.com/contract.pdf",
+    instructions={
+        "prompt": "Extract all parties involved in the contract, the contract start date, end date, and key obligations for each party."
+    }
+)
+
+print(response.data)
+```
+
+## Extract with Custom Parsing
+
+Combine extraction with custom parsing options:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.extract.run(
+    input="https://example.com/document.pdf",
+    instructions={
+        "schema": {
+            "section_titles": "array",
+            "key_figures": "array"
+        }
+    },
+    parsing={
+        "enhance": {
+            "summarize_figures": True
+        },
+        "formatting": {
+            "add_page_markers": True
+        }
+    }
+)
+```
+
+## Async Job Processing
+
+For large documents or batch processing, use async jobs:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Start an async extraction job
+job = client.extract.run_job(
+    input="https://example.com/large-document.pdf",
+    instructions={
+        "schema": {
+            "field1": "string",
+            "field2": "number"
+        }
+    },
+    async_={
+        "webhook": {"url": "https://example.com/webhook"}
+    }
+)
+
+print(f"Job ID: {job.job_id}")
+
+# Poll for results
+result = client.job.get(job.job_id)
+```
+
+## Reusing Parsed Documents
+
+Extract from a document that was previously parsed:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# First parse the document
+parse_response = client.parse.run(
+    input="https://example.com/document.pdf"
+)
+
+# Then extract using the job ID (no re-parsing needed)
+extract_response = client.extract.run(
+    input=f"jobid://{parse_response.job_id}",
+    instructions={
+        "schema": {"key_data": "string"}
+    }
+)
+```
+
+## Complex Schema Example
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+# Extract structured data from financial statements
+schema = {
+    "company_info": {
+        "name": "string",
+        "ticker": "string",
+        "fiscal_year": "string"
+    },
+    "financial_metrics": {
+        "revenue": "number",
+        "net_income": "number",
+        "eps": "number",
+        "operating_expenses": "number"
+    },
+    "balance_sheet": {
+        "total_assets": "number",
+        "total_liabilities": "number",
+        "shareholders_equity": "number"
+    },
+    "key_risks": "array"
+}
+
+response = client.extract.run(
+    input="https://example.com/10k-filing.pdf",
+    instructions={"schema": schema}
+)
+
+print(response.data)
+```

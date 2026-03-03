@@ -1,0 +1,242 @@
+---
+title: Error Handling
+description: Handle exceptions and errors when using the Reducto Python SDK
+---
+
+## Overview
+
+The Reducto Python SDK provides a comprehensive exception hierarchy to help you handle different types of errors that may occur when interacting with the API.
+
+## Exception Hierarchy
+
+All errors inherit from `reducto.APIError`, which itself inherits from `reducto.ReductoError`:
+
+```
+ReductoError
+└── APIError
+    ├── APIConnectionError
+    │   └── APITimeoutError
+    ├── APIStatusError
+    │   ├── BadRequestError (400)
+    │   ├── AuthenticationError (401)
+    │   ├── PermissionDeniedError (403)
+    │   ├── NotFoundError (404)
+    │   ├── ConflictError (409)
+    │   ├── UnprocessableEntityError (422)
+    │   ├── RateLimitError (429)
+    │   └── InternalServerError (>=500)
+    └── APIResponseValidationError
+```
+
+## Basic Error Handling
+
+When the API returns a non-success status code (4xx or 5xx), a subclass of `reducto.APIStatusError` is raised with `status_code` and `response` properties:
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.APIConnectionError as e:
+    print("The server could not be reached")
+    print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+except reducto.RateLimitError as e:
+    print("A 429 status code was received; we should back off a bit.")
+except reducto.APIStatusError as e:
+    print("Another non-200-range status code was received")
+    print(e.status_code)
+    print(e.response)
+```
+
+## Exception Types
+
+### Connection Errors
+
+<ParamField path="APIConnectionError" type="exception">
+  Raised when the library is unable to connect to the API (e.g., due to network connection problems).
+  
+  **Attributes:**
+  - `message` - Error message
+  - `request` - The HTTP request object
+  - `__cause__` - The underlying exception, likely from httpx
+</ParamField>
+
+<ParamField path="APITimeoutError" type="exception">
+  Raised when a request times out. Inherits from `APIConnectionError`.
+  
+  **Note:** Requests that time out are retried twice by default.
+</ParamField>
+
+### Status Code Errors
+
+<ParamField path="APIStatusError" type="exception">
+  Base class for all HTTP status code errors (4xx and 5xx responses).
+  
+  **Attributes:**
+  - `status_code` - The HTTP status code
+  - `response` - The HTTP response object
+  - `message` - Error message
+  - `request` - The HTTP request object
+  - `body` - The response body (decoded JSON or raw response)
+</ParamField>
+
+### HTTP Status Code Reference
+
+| Status Code | Error Type | Description |
+| ----------- | -------------------------- | ----------- |
+| 400 | `BadRequestError` | Invalid request parameters |
+| 401 | `AuthenticationError` | Invalid or missing API key |
+| 403 | `PermissionDeniedError` | Insufficient permissions |
+| 404 | `NotFoundError` | Resource not found |
+| 409 | `ConflictError` | Request conflicts with current state |
+| 422 | `UnprocessableEntityError` | Valid request but unable to process |
+| 429 | `RateLimitError` | Rate limit exceeded |
+| >=500 | `InternalServerError` | Server-side error |
+| N/A | `APIConnectionError` | Network connectivity issues |
+
+## Common Error Scenarios
+
+### Authentication Errors
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto(api_key="invalid-key")
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.AuthenticationError as e:
+    print(f"Authentication failed: {e.message}")
+    print(f"Status code: {e.status_code}")  # 401
+    # Handle invalid API key - check credentials
+```
+
+### Rate Limiting
+
+```python
+import reducto
+import time
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.RateLimitError as e:
+    print("Rate limit exceeded, backing off...")
+    print(f"Status code: {e.status_code}")  # 429
+    time.sleep(60)  # Wait before retrying
+    # Implement exponential backoff or retry logic
+```
+
+### Connection Errors
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.APITimeoutError as e:
+    print("Request timed out")
+    print(f"Request: {e.request}")
+    # Retry with longer timeout or check network
+except reducto.APIConnectionError as e:
+    print("Could not connect to the server")
+    print(f"Underlying cause: {e.__cause__}")
+    # Check network connectivity
+```
+
+### Validation Errors
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="invalid-input",
+    )
+except reducto.UnprocessableEntityError as e:
+    print(f"Invalid input: {e.message}")
+    print(f"Response body: {e.body}")
+    # Handle validation errors - check input format
+except reducto.BadRequestError as e:
+    print(f"Bad request: {e.message}")
+    print(f"Response body: {e.body}")
+    # Handle malformed requests
+```
+
+## Automatic Retries
+
+Certain errors are automatically retried 2 times by default with exponential backoff:
+
+- Connection errors (network connectivity issues)
+- 408 Request Timeout
+- 409 Conflict
+- 429 Rate Limit
+- >=500 Internal Server errors
+
+<Info>
+Retries can be configured using the `max_retries` option when initializing the client or per-request using `with_options()`.
+</Info>
+
+## Accessing Error Details
+
+All `APIStatusError` exceptions provide access to detailed error information:
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.APIStatusError as e:
+    # Access error details
+    print(f"Status code: {e.status_code}")
+    print(f"Error message: {e.message}")
+    print(f"Response body: {e.body}")
+    print(f"Request URL: {e.request.url}")
+    print(f"Response headers: {e.response.headers}")
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Catch Specific Exceptions" icon="bullseye">
+    Always catch specific exception types before generic ones to handle different error scenarios appropriately.
+  </Card>
+  <Card title="Log Error Details" icon="file-lines">
+    Log the `status_code`, `message`, and `body` attributes for debugging and monitoring.
+  </Card>
+  <Card title="Implement Retry Logic" icon="rotate">
+    For transient errors like rate limits or timeouts, implement appropriate retry logic with exponential backoff.
+  </Card>
+  <Card title="Handle Connection Errors" icon="wifi">
+    Always handle `APIConnectionError` to gracefully manage network issues.
+  </Card>
+</CardGroup>
+
+<Warning>
+Never ignore errors silently. Always log or handle exceptions appropriately to ensure reliability and debuggability.
+</Warning>

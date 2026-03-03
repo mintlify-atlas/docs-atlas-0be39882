@@ -1,0 +1,251 @@
+---
+title: "Reducto Client"
+description: "Synchronous Reducto client initialization and configuration"
+---
+
+## Overview
+
+The `Reducto` class is the main synchronous client for interacting with the Reducto API. It handles authentication, request configuration, and provides access to all API resources.
+
+## Constructor
+
+```python
+from reducto import Reducto
+
+client = Reducto(
+    api_key="your-api-key",
+    environment="production",
+    timeout=60.0,
+    max_retries=2,
+)
+```
+
+## Parameters
+
+<ParamField path="api_key" type="str" required>
+  Your Reducto API key. If not provided, the client will automatically read from the `REDUCTO_API_KEY` environment variable.
+  
+  You can obtain your API key from the [Reducto dashboard](https://platform.reducto.ai).
+</ParamField>
+
+<ParamField path="environment" type="Literal['production', 'eu', 'au']" default="production">
+  The API environment to use. Available options:
+  - `production` - US production environment (https://platform.reducto.ai)
+  - `eu` - EU production environment (https://eu.platform.reducto.ai)
+  - `au` - Australia production environment (https://au.platform.reducto.ai)
+</ParamField>
+
+<ParamField path="base_url" type="str | httpx.URL | None">
+  Override the base URL for the API. If provided, this takes precedence over the `environment` parameter.
+  
+  You can also set this via the `REDUCTO_BASE_URL` environment variable.
+</ParamField>
+
+<ParamField path="timeout" type="float | Timeout | None" default="3600.0">
+  Request timeout in seconds. Defaults to 1 hour (3600 seconds).
+  
+  For more granular control, pass an `httpx.Timeout` object:
+  ```python
+  import httpx
+  client = Reducto(
+      timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0)
+  )
+  ```
+</ParamField>
+
+<ParamField path="max_retries" type="int" default="2">
+  Maximum number of retries for failed requests. Defaults to 2.
+  
+  The client automatically retries:
+  - Connection errors
+  - 408 Request Timeout
+  - 409 Conflict
+  - 429 Rate Limit
+  - 5xx Server errors
+  
+  Set to `0` to disable retries.
+</ParamField>
+
+<ParamField path="default_headers" type="Mapping[str, str] | None">
+  Additional headers to include with every request.
+  
+  ```python
+  client = Reducto(
+      default_headers={"X-Custom-Header": "value"}
+  )
+  ```
+</ParamField>
+
+<ParamField path="default_query" type="Mapping[str, object] | None">
+  Default query parameters to include with every request.
+</ParamField>
+
+<ParamField path="http_client" type="httpx.Client | None">
+  Custom httpx client instance for advanced use cases. Use this to configure:
+  - Custom proxies
+  - Custom transports
+  - Connection pooling
+  
+  ```python
+  import httpx
+  from reducto import Reducto, DefaultHttpxClient
+  
+  client = Reducto(
+      http_client=DefaultHttpxClient(
+          proxy="http://my.proxy.com",
+          transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+      )
+  )
+  ```
+</ParamField>
+
+## Basic Usage
+
+### With Environment Variable
+
+The recommended approach is to set your API key as an environment variable:
+
+```python
+import os
+from reducto import Reducto
+
+# Set REDUCTO_API_KEY in your environment or .env file
+client = Reducto()
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+### With Explicit API Key
+
+```python
+from reducto import Reducto
+
+client = Reducto(
+    api_key="your-api-key",
+)
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+### With EU Environment
+
+```python
+from reducto import Reducto
+
+client = Reducto(
+    environment="eu",
+)
+
+response = client.parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+## Available Resources
+
+The Reducto client provides access to the following resource namespaces:
+
+- `client.parse` - Document parsing operations
+- `client.split` - Document splitting operations
+- `client.extract` - Data extraction operations
+- `client.edit` - Document editing operations
+- `client.job` - Job management operations
+- `client.pipeline` - Pipeline operations
+- `client.webhook` - Webhook configuration
+
+## Advanced Features
+
+### Context Manager
+
+Use the client as a context manager to ensure proper resource cleanup:
+
+```python
+from reducto import Reducto
+
+with Reducto() as client:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+    # HTTP client is automatically closed when exiting
+```
+
+### Per-Request Configuration
+
+Override client settings for individual requests:
+
+```python
+client = Reducto()
+
+# Override timeout for a specific request
+response = client.with_options(timeout=5.0).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+
+# Override max retries
+response = client.with_options(max_retries=5).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+### Raw Response Access
+
+Access raw HTTP response data including headers:
+
+```python
+response = client.parse.with_raw_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+
+print(response.headers.get('X-Request-Id'))
+parse_result = response.parse()  # Get the parsed response object
+```
+
+### Streaming Response
+
+Stream response data for large payloads:
+
+```python
+with client.parse.with_streaming_response.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+) as response:
+    print(response.headers.get("Content-Type"))
+    
+    for line in response.iter_lines():
+        print(line)
+```
+
+## Error Handling
+
+The client raises specific exceptions for different error types:
+
+```python
+import reducto
+from reducto import Reducto
+
+client = Reducto()
+
+try:
+    response = client.parse.run(
+        input="https://pdfobject.com/pdf/sample.pdf",
+    )
+except reducto.APIConnectionError as e:
+    print("Network connection error")
+    print(e.__cause__)
+except reducto.AuthenticationError as e:
+    print("Invalid API key")
+except reducto.RateLimitError as e:
+    print("Rate limit exceeded")
+except reducto.APIStatusError as e:
+    print(f"API error: {e.status_code}")
+    print(e.response)
+```
+
+## See Also
+
+- [AsyncReducto Client](/api/async-client) - Async version of the client
+- [Parse Operations](/api/parse) - Document parsing methods
+- [Extract Operations](/api/extract) - Data extraction methods

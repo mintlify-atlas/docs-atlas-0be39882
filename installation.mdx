@@ -1,0 +1,91 @@
+---
+title: Installation
+description: Install the Reducto Python SDK and set up your API key
+---
+
+# Installation
+
+Get started with the Reducto Python SDK by installing the package and configuring your API key.
+
+## Install from PyPI
+
+<Steps>
+  <Step title="Install the package">
+    Install the Reducto SDK using pip:
+
+    ```bash
+    pip install reductoai
+    ```
+  </Step>
+
+  <Step title="Get your API key">
+    Sign up for an account at [Reducto](https://reducto.ai) and obtain your API key from the dashboard.
+  </Step>
+
+  <Step title="Configure your API key">
+    We recommend using [python-dotenv](https://pypi.org/project/python-dotenv/) to manage your API key securely.
+
+    First, install python-dotenv:
+
+    ```bash
+    pip install python-dotenv
+    ```
+
+    Then create a `.env` file in your project root:
+
+    ```bash
+    REDUCTO_API_KEY="your-api-key-here"
+    ```
+
+    <Warning>
+      Never commit your `.env` file to version control. Add it to your `.gitignore` file.
+    </Warning>
+  </Step>
+
+  <Step title="Verify installation">
+    Verify the installation by checking the installed version:
+
+    ```python
+    import reducto
+    print(reducto.__version__)
+    ```
+  </Step>
+</Steps>
+
+## Optional: Install with aiohttp
+
+For improved concurrency performance with async operations, you can install Reducto with aiohttp support:
+
+```bash
+pip install reductoai[aiohttp]
+```
+
+<Info>
+  The aiohttp backend provides better concurrency performance for async operations compared to the default httpx backend.
+</Info>
+
+## Environment Configuration
+
+The SDK supports the following environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `REDUCTO_API_KEY` | Your Reducto API key | Required |
+| `REDUCTO_BASE_URL` | Custom base URL for API requests | `https://api.reducto.ai` |
+| `REDUCTO_LOG` | Logging level (`info` or `debug`) | None |
+
+## Requirements
+
+- **Python version:** 3.9 or higher
+- **Dependencies:** Automatically installed with the package
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Parse your first document
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/client">
+    Explore the full API
+  </Card>
+</CardGroup>

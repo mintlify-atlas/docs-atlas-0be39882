@@ -1,0 +1,447 @@
+---
+title: 'Advanced Configuration'
+description: 'Configure document processing with advanced settings and options'
+---
+
+## Overview
+
+The Reducto SDK offers extensive configuration options to customize how documents are processed. This guide covers advanced settings, processing options, and enhancement features.
+
+## Client Configuration
+
+### Environment Selection
+
+Choose your deployment region when initializing the client:
+
+```python
+import os
+from reducto import Reducto
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="eu",  # or 'production' | 'au'; defaults to "production"
+)
+```
+
+### Timeouts
+
+By default, requests time out after 1 hour. Configure custom timeouts:
+
+```python
+from reducto import Reducto
+import httpx
+
+# Simple timeout (in seconds)
+client = Reducto(
+    timeout=20.0,  # 20 seconds (default is 1 hour)
+)
+
+# Granular timeout control
+client = Reducto(
+    timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0),
+)
+
+# Override per-request
+client.with_options(timeout=5.0).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+### Retries
+
+Certain errors are automatically retried 2 times by default:
+
+```python
+from reducto import Reducto
+
+# Configure default retries
+client = Reducto(
+    max_retries=0,  # Disable retries (default is 2)
+)
+
+# Override per-request
+client.with_options(max_retries=5).parse.run(
+    input="https://pdfobject.com/pdf/sample.pdf",
+)
+```
+
+## Document Settings
+
+### Basic Settings
+
+Configure fundamental document processing options:
+
+```python
+response = client.parse.run(
+    input="document.pdf",
+    settings={
+        # Password protection
+        "document_password": "secret123",
+        
+        # Page range processing (1-indexed)
+        "page_range": [1, 5],  # Process pages 1-5
+        
+        # OCR system selection
+        "ocr_system": "standard",  # or 'legacy'
+        
+        # Extraction mode
+        "extraction_mode": "hybrid",  # or 'ocr'
+        
+        # Result persistence
+        "persist_results": True,  # Persist results indefinitely
+        
+        # Image returns
+        "return_images": ["figure", "table"],
+        
+        # OCR data
+        "return_ocr_data": True,
+        
+        # Job timeout
+        "timeout": 300.0,  # 5 minutes
+    }
+)
+```
+
+### Page Range Options
+
+Multiple ways to specify page ranges:
+
+```python
+# Single page
+settings={"page_range": [3]}
+
+# Range of pages
+settings={"page_range": [1, 10]}  # Pages 1-10
+
+# Multiple ranges
+settings={"page_range": [[1, 5], [10, 15]]}  # Pages 1-5 and 10-15
+
+# Complex page range object
+settings={
+    "page_range": {
+        "start": 1,
+        "end": 10,
+        "step": 2  # Every other page
+    }
+}
+```
+
+## Advanced Processing Options
+
+Configure detailed processing behavior:
+
+```python
+from reducto import Reducto
+
+client = Reducto()
+
+response = client.parse.run(
+    input="document.pdf",
+    processing_options={
+        # Page markers
+        "add_page_markers": True,
+        
+        # Text formatting
+        "keep_line_breaks": True,
+        "remove_text_formatting": False,
+        
+        # Table handling
+        "merge_tables": True,
+        "table_output_format": "html",  # or 'json', 'md', 'csv', 'dynamic'
+        
+        # OCR system
+        "ocr_system": "highres",  # or 'multilingual', 'combined', 'reducto', 'legacy'
+        
+        # Detection features
+        "enable_highlight_detection": True,
+        "enable_change_tracking": True,
+        
+        # Filtering
+        "filter_line_numbers": True,
+        
+        # Hierarchy
+        "continue_hierarchy": True,
+        
+        # Comments
+        "read_comments": True,
+    }
+)
+```
+
+### Spreadsheet-Specific Options
+
+Additional options for Excel and spreadsheet files:
+
+```python
+response = client.parse.run(
+    input="spreadsheet.xlsx",
+    processing_options={
+        # Hidden content
+        "exclude_hidden_sheets": True,
+        "exclude_hidden_rows_cols": True,
+        
+        # Table detection
+        "spreadsheet_table_clustering": "intelligent",  # or 'default', 'disabled'
+        
+        # Cell formatting
+        "include_color_information": True,
+        "include_formula_information": True,
+        
+        # Large table handling
+        "large_table_chunking": {
+            "enabled": True,
+            "max_rows": 1000,
+            "overlap": 10
+        }
+    }
+)
+```
+
+## Enhancement Options
+
+Enhance extraction accuracy with AI-powered features:
+
+```python
+response = client.parse.run(
+    input="document.pdf",
+    enhance={
+        # Figure summarization
+        "summarize_figures": True,
+        
+        # Agentic enhancement for specific block types
+        "agentic": [
+            {
+                "type": "table",
+                "enabled": True
+            },
+            {
+                "type": "figure",
+                "enabled": True
+            },
+            {
+                "type": "text",
+                "enabled": True
+            }
+        ]
+    }
+)
+```
+
+<Note>
+  Agentic enhancement uses vision language models to improve accuracy but will incur additional cost and latency.
+</Note>
+
+### Agentic Enhancement by Type
+
+Enable AI enhancement for specific content types:
+
+```python
+# Enhance only tables
+enhance={"agentic": [{"type": "table"}]}
+
+# Enhance tables and figures
+enhance={"agentic": [{"type": "table"}, {"type": "figure"}]}
+
+# Enhance all content types
+enhance={
+    "agentic": [
+        {"type": "table"},
+        {"type": "figure"},
+        {"type": "text"}
+    ],
+    "summarize_figures": True
+}
+```
+
+## HTTP Client Customization
+
+Customize the underlying HTTP client for advanced use cases:
+
+```python
+import httpx
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto(
+    base_url="http://my.test.server.example.com:8083",
+    http_client=DefaultHttpxClient(
+        proxy="http://my.test.proxy.example.com",
+        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+    ),
+)
+```
+
+### Per-Request Customization
+
+```python
+client.with_options(
+    http_client=DefaultHttpxClient(...)
+).parse.run(
+    input="document.pdf",
+)
+```
+
+## HTTP Client with aiohttp
+
+For improved concurrency in async applications, use aiohttp:
+
+```python
+import os
+import asyncio
+from reducto import DefaultAioHttpClient, AsyncReducto
+
+async def main():
+    async with AsyncReducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+        http_client=DefaultAioHttpClient(),
+    ) as client:
+        response = await client.parse.run(
+            input="https://pdfobject.com/pdf/sample.pdf",
+        )
+
+asyncio.run(main())
+```
+
+<Note>
+  You must install the aiohttp dependency: `pip install reductoai[aiohttp]`
+</Note>
+
+## Resource Management
+
+Properly manage HTTP connections:
+
+```python
+from reducto import Reducto
+
+# Context manager (recommended)
+with Reducto() as client:
+    response = client.parse.run(
+        input="document.pdf",
+    )
+# HTTP client is now closed
+
+# Manual close
+client = Reducto()
+try:
+    response = client.parse.run(input="document.pdf")
+finally:
+    client.close()
+```
+
+## Logging
+
+Enable SDK logging for debugging:
+
+```bash
+# Info level
+export REDUCTO_LOG=info
+
+# Debug level (verbose)
+export REDUCTO_LOG=debug
+```
+
+```python
+# In Python
+import os
+os.environ["REDUCTO_LOG"] = "info"
+
+from reducto import Reducto
+client = Reducto()
+```
+
+## Complete Configuration Example
+
+Here's a comprehensive example combining multiple configuration options:
+
+```python
+import os
+import httpx
+from reducto import Reducto, DefaultHttpxClient
+
+client = Reducto(
+    api_key=os.environ.get("REDUCTO_API_KEY"),
+    environment="production",
+    timeout=httpx.Timeout(60.0, read=10.0, write=10.0, connect=5.0),
+    max_retries=3,
+    http_client=DefaultHttpxClient(
+        proxy=os.environ.get("HTTPS_PROXY"),
+    ),
+)
+
+response = client.parse.run(
+    input="document.pdf",
+    settings={
+        "page_range": [1, 10],
+        "ocr_system": "standard",
+        "extraction_mode": "hybrid",
+        "return_images": ["figure", "table"],
+        "persist_results": True,
+    },
+    processing_options={
+        "add_page_markers": True,
+        "table_output_format": "html",
+        "enable_highlight_detection": True,
+        "merge_tables": True,
+    },
+    enhance={
+        "summarize_figures": True,
+        "agentic": [
+            {"type": "table"},
+            {"type": "figure"},
+        ]
+    },
+    webhook={
+        "mode": "svix",
+        "metadata": {"user_id": "12345"},
+    }
+)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Environment Variables">
+    Store API keys and configuration in environment variables instead of hardcoding:
+    ```python
+    import os
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
+    client = Reducto(
+        api_key=os.environ.get("REDUCTO_API_KEY"),
+    )
+    ```
+  </Accordion>
+  
+  <Accordion title="Configure Timeouts Appropriately">
+    Set timeouts based on your document size and complexity. Larger documents need longer timeouts:
+    ```python
+    # Short documents
+    client = Reducto(timeout=30.0)
+    
+    # Large documents
+    client = Reducto(timeout=300.0)
+    ```
+  </Accordion>
+  
+  <Accordion title="Use Context Managers">
+    Always use context managers or manually close clients to prevent resource leaks:
+    ```python
+    with Reducto() as client:
+        response = client.parse.run(input="document.pdf")
+    ```
+  </Accordion>
+  
+  <Accordion title="Enable Logging in Development">
+    Use logging to debug issues during development:
+    ```bash
+    export REDUCTO_LOG=debug
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+- [Webhooks](/advanced/webhooks) - Configure webhooks for async jobs
+- [Error Handling](/concepts/error-handling) - Handle errors and retries
+- [File Uploads](/advanced/file-uploads) - Different methods to upload files

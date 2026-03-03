@@ -1,0 +1,97 @@
+---
+title: Pipeline
+description: Execute custom document processing pipelines with pre-configured settings
+---
+
+## pipeline.run()
+
+Executes a custom pipeline synchronously on a document.
+
+```python
+client.pipeline.run(
+    input="https://example.com/document.pdf",
+    pipeline_id="your-pipeline-id",
+    settings={...}
+)
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+  
+  For edit pipelines, this should be a string containing the edit instructions.
+</ParamField>
+
+<ParamField path="pipeline_id" type="string" required>
+  The ID of the pipeline to use for the document.
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  Settings for pipeline execution that override pipeline defaults.
+</ParamField>
+
+### Response
+
+<ResponseField name="PipelineResponse" type="object">
+  Returns the result of the pipeline execution.
+
+  <ResponseField name="result" type="object">
+    The processed document data according to the pipeline configuration.
+  </ResponseField>
+</ResponseField>
+
+---
+
+## pipeline.run_job()
+
+Executes a custom pipeline asynchronously and returns a job ID immediately.
+
+```python
+response = client.pipeline.run_job(
+    input="https://example.com/document.pdf",
+    pipeline_id="your-pipeline-id",
+    async_={"webhook": {"url": "https://example.com/webhook"}},
+    settings={...}
+)
+
+print(response.job_id)  # Use this to check job status later
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+  
+  For edit pipelines, this should be a string containing the edit instructions.
+</ParamField>
+
+<ParamField path="pipeline_id" type="string" required>
+  The ID of the pipeline to use for the document.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous).
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  Settings for pipeline execution that override pipeline defaults.
+</ParamField>
+
+### Response
+
+<ResponseField name="PipelineRunJobResponse" type="object">
+  <ResponseField name="job_id" type="string">
+    The ID of the asynchronous job. Use `client.job.get(job_id)` to retrieve the result when the job completes.
+  </ResponseField>
+</ResponseField>

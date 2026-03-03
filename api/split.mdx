@@ -1,0 +1,119 @@
+---
+title: Split
+description: Split documents into categorized sections with AI-powered classification
+---
+
+## split.run()
+
+Splits a document into categorized sections synchronously.
+
+```python
+client.split.run(
+    input="https://example.com/document.pdf",
+    split_description=[
+        {"category": "summary", "description": "Executive summary sections"},
+        {"category": "financials", "description": "Financial data and tables"}
+    ],
+    parsing={...},
+    settings={...},
+    split_rules="Additional rules for splitting"
+)
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="split_description" type="Iterable[SplitCategory]" required>
+  The configuration options for processing the document. Define the categories and their descriptions for splitting.
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions" optional>
+  The configuration options for parsing the document. If you are passing in a `jobid://` URL for the file, then this configuration will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  The settings for split processing.
+</ParamField>
+
+<ParamField path="split_rules" type="string" optional>
+  The prompt that describes rules for splitting the document.
+</ParamField>
+
+### Response
+
+<ResponseField name="SplitResponse" type="object">
+  Returns the document split into categorized sections.
+
+  <ResponseField name="result" type="object">
+    The categorized sections of the document.
+  </ResponseField>
+</ResponseField>
+
+---
+
+## split.run_job()
+
+Splits a document into categorized sections asynchronously and returns a job ID immediately.
+
+```python
+response = client.split.run_job(
+    input="https://example.com/document.pdf",
+    split_description=[
+        {"category": "summary", "description": "Executive summary sections"},
+        {"category": "financials", "description": "Financial data and tables"}
+    ],
+    async_={"webhook": {"url": "https://example.com/webhook"}},
+    parsing={...},
+    settings={...},
+    split_rules="Additional rules for splitting"
+)
+
+print(response.job_id)  # Use this to check job status later
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="split_description" type="Iterable[SplitCategory]" required>
+  The configuration options for processing the document. Define the categories and their descriptions for splitting.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous).
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions" optional>
+  The configuration options for parsing the document. If you are passing in a `jobid://` URL for the file, then this configuration will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  The settings for split processing.
+</ParamField>
+
+<ParamField path="split_rules" type="string" optional>
+  The prompt that describes rules for splitting the document.
+</ParamField>
+
+### Response
+
+<ResponseField name="SplitRunJobResponse" type="object">
+  <ResponseField name="job_id" type="string">
+    The ID of the asynchronous job. Use `client.job.get(job_id)` to retrieve the result when the job completes.
+  </ResponseField>
+</ResponseField>

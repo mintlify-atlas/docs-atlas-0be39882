@@ -1,0 +1,115 @@
+---
+title: Extract
+description: Extract structured data from documents with custom instructions
+---
+
+## extract.run()
+
+Extracts structured data from a document synchronously based on provided instructions.
+
+```python
+client.extract.run(
+    input="https://example.com/document.pdf",
+    instructions={"schema": {...}, "prompt": "Extract all contact information"},
+    parsing={...},
+    settings={...}
+)
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="instructions" type="object" optional>
+  The instructions to use for the extraction. Define the schema and extraction prompts.
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions" optional>
+  The configuration options for parsing the document. If you are passing in a `jobid://` URL for the file, then this configuration will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  The settings to use for the extraction.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous). Only available when using async mode.
+</ParamField>
+
+### Response
+
+<ResponseField name="ExtractRunResponse" type="ExtractResponse | AsyncExtractResponse">
+  Returns either an `ExtractResponse` with the extracted data (sync mode) or an `AsyncExtractResponse` containing a `job_id` (async mode).
+
+  <Expandable title="ExtractResponse">
+    <ResponseField name="result" type="object">
+      The extracted data in the schema format you specified.
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="AsyncExtractResponse">
+    <ResponseField name="job_id" type="string">
+      The ID of the asynchronous job. Use this to retrieve the result later with `job.get()`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## extract.run_job()
+
+Extracts structured data from a document asynchronously and returns a job ID immediately.
+
+```python
+response = client.extract.run_job(
+    input="https://example.com/document.pdf",
+    instructions={"schema": {...}, "prompt": "Extract all contact information"},
+    async_={"webhook": {"url": "https://example.com/webhook"}},
+    parsing={...},
+    settings={...}
+)
+
+print(response.job_id)  # Use this to check job status later
+```
+
+### Parameters
+
+<ParamField path="input" type="string | list[string]" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+  4. A `jobid://` prefixed URL obtained from a previous /parse invocation
+  5. A list of URLs (for multi-document pipelines, V3 API only)
+</ParamField>
+
+<ParamField path="instructions" type="object" optional>
+  The instructions to use for the extraction. Define the schema and extraction prompts.
+</ParamField>
+
+<ParamField path="async_" type="ConfigV3AsyncConfig" optional>
+  The configuration options for asynchronous processing (default synchronous).
+</ParamField>
+
+<ParamField path="parsing" type="ParseOptions" optional>
+  The configuration options for parsing the document. If you are passing in a `jobid://` URL for the file, then this configuration will be ignored.
+</ParamField>
+
+<ParamField path="settings" type="object" optional>
+  The settings to use for the extraction.
+</ParamField>
+
+### Response
+
+<ResponseField name="ExtractRunJobResponse" type="object">
+  <ResponseField name="job_id" type="string">
+    The ID of the asynchronous job. Use `client.job.get(job_id)` to retrieve the result when the job completes.
+  </ResponseField>
+</ResponseField>

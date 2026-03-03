@@ -1,0 +1,331 @@
+---
+title: Configuration Types
+description: Configuration options for Reducto API operations
+---
+
+## Settings
+
+General document processing settings.
+
+<ResponseField name="document_password" type="string">
+  Password to decrypt password-protected documents.
+</ResponseField>
+
+<ResponseField name="embed_pdf_metadata" type="boolean">
+  If True, embed OCR metadata into the returned PDF. Defaults to False.
+</ResponseField>
+
+<ResponseField name="extraction_mode" type="enum">
+  The mode to use for text extraction from PDFs. One of:
+  - `ocr` - Uses optical character recognition only
+  - `hybrid` - Combines OCR with embedded PDF text for best accuracy (default)
+</ResponseField>
+
+<ResponseField name="force_file_extension" type="string">
+  Force the URL to be downloaded as a specific file extension (e.g. `.png`).
+</ResponseField>
+
+<ResponseField name="force_url_result" type="boolean">
+  Force the result to be returned in URL form.
+</ResponseField>
+
+<ResponseField name="ocr_system" type="enum">
+  OCR system to use. One of:
+  - `standard` - Best multilingual OCR system
+  - `legacy` - Only supports Germanic languages (for backwards compatibility)
+</ResponseField>
+
+<ResponseField name="page_range" type="Union[PageRange, List[PageRange], List[int]]">
+  The page range to process (1-indexed). By default, the entire document is processed.
+</ResponseField>
+
+<ResponseField name="persist_results" type="boolean">
+  If True, persist the results indefinitely. Defaults to False.
+</ResponseField>
+
+<ResponseField name="return_images" type="List[enum]">
+  Whether to return images for the specified block types. Options: `figure`, `table`. By default, no images are returned.
+</ResponseField>
+
+<ResponseField name="return_ocr_data" type="boolean">
+  If True, return OCR data in the result. Defaults to False.
+</ResponseField>
+
+<ResponseField name="timeout" type="float">
+  The timeout for the job in seconds.
+</ResponseField>
+
+## Enhance
+
+Configuration for enhancing extraction accuracy using AI models.
+
+<ResponseField name="agentic" type="List[Union[TableAgentic, FigureAgentic, TextAgentic]]">
+  Agentic uses vision language models to enhance the accuracy of the output of different types of extraction. This will incur a cost and latency increase.
+</ResponseField>
+
+<ResponseField name="summarize_figures" type="boolean">
+  If True, summarize figures using a small vision language model. Defaults to True.
+</ResponseField>
+
+### TableAgentic
+
+<ResponseField name="scope" type="literal" required>
+  Always set to "table".
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Custom prompt for table agentic processing.
+</ResponseField>
+
+### FigureAgentic
+
+<ResponseField name="scope" type="literal" required>
+  Always set to "figure".
+</ResponseField>
+
+<ResponseField name="advanced_chart_agent" type="boolean">
+  If True, use the advanced chart agent. Defaults to False.
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Custom prompt for figure agentic processing.
+</ResponseField>
+
+<ResponseField name="return_overlays" type="boolean">
+  If True, return overlays for the figure. This allows you to verify the quality of the extraction.
+</ResponseField>
+
+### TextAgentic
+
+<ResponseField name="scope" type="literal" required>
+  Always set to "text".
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Custom instructions for agentic text. Note: This only applies to form regions (key-value).
+</ResponseField>
+
+## Formatting
+
+Configuration for output formatting options.
+
+<ResponseField name="add_page_markers" type="boolean">
+  If True, add page markers to the output. Defaults to False. Useful for extracting data with page specific information.
+</ResponseField>
+
+<ResponseField name="include" type="List[enum]">
+  A list of formatting to include in the output. Options:
+  - `change_tracking`
+  - `highlight`
+  - `comments`
+  - `hyperlinks`
+  - `signatures`
+</ResponseField>
+
+<ResponseField name="merge_tables" type="boolean">
+  A flag to indicate if consecutive tables with the same number of columns should be merged. Defaults to False.
+</ResponseField>
+
+<ResponseField name="table_output_format" type="enum">
+  The mode to use for table output. Options:
+  - `html` - HTML table format
+  - `json` - JSON array format
+  - `md` - Markdown table format
+  - `jsonbbox` - JSON with bounding boxes
+  - `dynamic` - Returns md for simpler tables and html for complex tables (default)
+  - `csv` - CSV format
+</ResponseField>
+
+## Retrieval
+
+Configuration for retrieval and chunking behavior.
+
+<ResponseField name="chunking" type="Chunking">
+  Chunking configuration for the document.
+</ResponseField>
+
+<ResponseField name="embedding_optimized" type="boolean">
+  If True, use embedding optimized mode. Defaults to False.
+</ResponseField>
+
+<ResponseField name="filter_blocks" type="List[enum]">
+  A list of block types to filter out from 'content' and 'embed' fields. By default, no blocks are filtered. Options:
+  - `Header`
+  - `Footer`
+  - `Title`
+  - `Section Header`
+  - `Page Number`
+  - `List Item`
+  - `Figure`
+  - `Table`
+  - `Key Value`
+  - `Text`
+  - `Comment`
+  - `Signature`
+</ResponseField>
+
+## Chunking
+
+Configuration for document chunking behavior.
+
+<ResponseField name="chunk_mode" type="enum">
+  Choose how to partition chunks. Options:
+  - `variable` - Chunks by character length and visual context
+  - `section` - Chunks by section headers
+  - `page` - Chunks according to pages
+  - `page_sections` - Chunks first by page, then by sections within each page
+  - `disabled` - Returns one single chunk
+  - `block` - Chunks by individual blocks
+</ResponseField>
+
+<ResponseField name="chunk_size" type="integer">
+  The approximate size of chunks (in characters) that the document will be split into. Defaults to null, in which case the chunk size is variable between 250-1500 characters.
+</ResponseField>
+
+## ChunkingConfig
+
+Alternate chunking configuration (similar to Chunking).
+
+<ResponseField name="chunk_mode" type="enum">
+  Choose how to partition chunks. Options:
+  - `variable` - Chunks by character length and visual context
+  - `section` - Chunks by section headers
+  - `page` - Chunks according to pages
+  - `page_sections` - Chunks first by page, then by sections within each page
+  - `disabled` - Returns one single chunk
+  - `block` - Chunks by individual blocks
+</ResponseField>
+
+<ResponseField name="chunk_size" type="integer">
+  The approximate size of chunks (in characters) that the document will be split into. Defaults to None, in which case the chunk size is variable between 250-1500 characters.
+</ResponseField>
+
+## EnrichConfig
+
+Configuration for content enrichment using AI models.
+
+<ResponseField name="enabled" type="boolean">
+  If enabled, a large language/vision model will be used to postprocess the extracted content. Note: enabling enrich requires tables be outputted in markdown format. Defaults to False.
+</ResponseField>
+
+<ResponseField name="mode" type="enum">
+  The mode to use for enrichment. Options:
+  - `standard` - Standard enrichment (default)
+  - `page` - Page-level enrichment
+  - `table` - Table-level enrichment
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Add information to the prompt for enrichment.
+</ResponseField>
+
+## Spreadsheet
+
+Configuration for spreadsheet processing.
+
+<ResponseField name="clustering" type="enum">
+  In a spreadsheet with different tables inside, controls splitting behavior. Options:
+  - `accurate` - Applies more powerful models for superior accuracy, at 5× the default per-cell rate
+  - `fast` - Default clustering mode
+  - `disabled` - Disables clustering; registers as one large table
+</ResponseField>
+
+<ResponseField name="exclude" type="List[enum]">
+  Whether to exclude certain elements in the output. Options:
+  - `hidden_sheets`
+  - `hidden_rows`
+  - `hidden_cols`
+  - `styling`
+  - `spreadsheet_images`
+</ResponseField>
+
+<ResponseField name="include" type="List[enum]">
+  Whether to include certain elements in the output. Options:
+  - `cell_colors`
+  - `formula`
+</ResponseField>
+
+<ResponseField name="split_large_tables" type="SplitLargeTables">
+  Configuration for splitting large tables.
+</ResponseField>
+
+### SplitLargeTables
+
+<ResponseField name="enabled" type="boolean">
+  If True, split large tables into smaller tables. Defaults to True.
+</ResponseField>
+
+<ResponseField name="size" type="integer">
+  The size of the tables to split into. Defaults to 50.
+</ResponseField>
+
+## ArrayExtractConfig
+
+Configuration for array extraction of long lists.
+
+<ResponseField name="enabled" type="boolean">
+  Array extraction allows you to extract long lists of information from lengthy documents. It makes parallel calls on overlapping sections of the document.
+</ResponseField>
+
+<ResponseField name="mode" type="enum">
+  The array extraction version to use. Options:
+  - `auto` - Automatically selects the best mode
+  - `legacy` - Legacy extraction mode
+  - `streaming` - Streaming extraction mode
+  - `no_overlap` - No overlap between segments
+</ResponseField>
+
+<ResponseField name="pages_per_segment" type="integer">
+  Length of each segment, in pages, for parallel calls with array extraction.
+</ResponseField>
+
+<ResponseField name="streaming_extract_item_density" type="integer">
+  Number of items to extract in each stream call. Lower numbers will increase quality but be much slower. 50 works well for most documents with tables.
+</ResponseField>
+
+## ParseOptions
+
+Complete parsing options combining all configuration types.
+
+<ResponseField name="enhance" type="Enhance">
+  Enhancement configuration.
+</ResponseField>
+
+<ResponseField name="formatting" type="Formatting">
+  Formatting configuration.
+</ResponseField>
+
+<ResponseField name="retrieval" type="Retrieval">
+  Retrieval configuration.
+</ResponseField>
+
+<ResponseField name="settings" type="Settings">
+  General settings configuration.
+</ResponseField>
+
+<ResponseField name="spreadsheet" type="Spreadsheet">
+  Spreadsheet-specific configuration.
+</ResponseField>
+
+## WebhookConfigNew
+
+Configuration for webhook delivery.
+
+<ResponseField name="channels" type="List[string]">
+  A list of Svix channels the message will be delivered down. Omit to send to all channels.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  JSON metadata included in webhook request body.
+</ResponseField>
+
+<ResponseField name="mode" type="enum">
+  The mode to use for webhook delivery. Options:
+  - `disabled` - No webhook delivery (default)
+  - `svix` - Use Svix for webhook delivery (recommended for production)
+  - `direct` - Direct webhook delivery
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The URL to send the webhook to (if using direct webhook).
+</ResponseField>

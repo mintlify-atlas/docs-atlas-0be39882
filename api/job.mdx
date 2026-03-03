@@ -1,0 +1,170 @@
+---
+title: Job
+description: Manage and retrieve asynchronous job results
+---
+
+## job.get()
+
+Retrieves the status and result of an asynchronous job.
+
+```python
+result = client.job.get(job_id="your-job-id")
+
+if result.status == "Completed":
+    print(result.result)
+elif result.status == "Failed":
+    print(f"Job failed: {result.reason}")
+else:
+    print(f"Job status: {result.status}, progress: {result.progress}")
+```
+
+### Parameters
+
+<ParamField path="job_id" type="string" required>
+  The ID of the job to retrieve.
+</ParamField>
+
+### Response
+
+<ResponseField name="JobGetResponse" type="AsyncJobResponse | EnhancedAsyncJobResponse">
+  Returns the job status and result.
+
+  <Expandable title="AsyncJobResponse">
+    <ResponseField name="status" type="string">
+      The status of the job. One of: `Pending`, `Completed`, `Failed`, `Idle`.
+    </ResponseField>
+
+    <ResponseField name="progress" type="number" optional>
+      The progress of the job as a percentage (0-100).
+    </ResponseField>
+
+    <ResponseField name="reason" type="string" optional>
+      The reason for failure if the job failed.
+    </ResponseField>
+
+    <ResponseField name="result" type="object" optional>
+      The result of the job if completed. Can be a `ParseResponse`, `ExtractResponse`, `SplitResponse`, `EditResponse`, `PipelineResponse`, or `V3ExtractResponse`.
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="EnhancedAsyncJobResponse">
+    <ResponseField name="status" type="string">
+      The status of the job. One of: `Pending`, `Completed`, `Failed`, `Idle`.
+    </ResponseField>
+
+    <ResponseField name="progress" type="number" optional>
+      The progress of the job as a percentage (0-100).
+    </ResponseField>
+
+    <ResponseField name="reason" type="string" optional>
+      The reason for failure if the job failed.
+    </ResponseField>
+
+    <ResponseField name="result" type="object" optional>
+      The result of the job if completed.
+    </ResponseField>
+
+    <ResponseField name="bucket" type="object" optional>
+      Storage bucket information for the job.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="datetime" optional>
+      When the job was created.
+    </ResponseField>
+
+    <ResponseField name="duration" type="number" optional>
+      The duration of the job in seconds.
+    </ResponseField>
+
+    <ResponseField name="num_pages" type="integer" optional>
+      The number of pages processed.
+    </ResponseField>
+
+    <ResponseField name="raw_config" type="string" optional>
+      The raw configuration used for the job.
+    </ResponseField>
+
+    <ResponseField name="source" type="object" optional>
+      Source document information.
+    </ResponseField>
+
+    <ResponseField name="total_pages" type="integer" optional>
+      The total number of pages in the document.
+    </ResponseField>
+
+    <ResponseField name="type" type="string" optional>
+      The type of job. One of: `Parse`, `Extract`, `Split`, `Edit`, `Pipeline`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## job.get_all()
+
+Retrieves a paginated list of all jobs.
+
+```python
+response = client.job.get_all(
+    limit=50,
+    cursor=None,
+    exclude_configs=True
+)
+
+for job in response.jobs:
+    print(f"Job {job.id}: {job.status}")
+
+# Get next page
+if response.next_cursor:
+    next_page = client.job.get_all(cursor=response.next_cursor)
+```
+
+### Parameters
+
+<ParamField path="cursor" type="string" optional>
+  Cursor for pagination. Use the `next_cursor` from the previous response to fetch the next page.
+</ParamField>
+
+<ParamField path="exclude_configs" type="boolean" optional>
+  Exclude `raw_config` from response to reduce size.
+</ParamField>
+
+<ParamField path="limit" type="integer" optional>
+  Maximum number of jobs to return per page. Defaults to 100, max 500.
+</ParamField>
+
+### Response
+
+<ResponseField name="JobGetAllResponse" type="object">
+  Returns a paginated list of jobs.
+
+  <ResponseField name="jobs" type="array">
+    An array of job objects with their status and metadata.
+  </ResponseField>
+
+  <ResponseField name="next_cursor" type="string" optional>
+    Cursor to use for fetching the next page of results.
+  </ResponseField>
+</ResponseField>
+
+---
+
+## job.cancel()
+
+Cancels a pending or in-progress job.
+
+```python
+client.job.cancel(job_id="your-job-id")
+```
+
+### Parameters
+
+<ParamField path="job_id" type="string" required>
+  The ID of the job to cancel.
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="object">
+  Returns a success confirmation.
+</ResponseField>

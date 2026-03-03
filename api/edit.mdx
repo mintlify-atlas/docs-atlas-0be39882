@@ -1,0 +1,109 @@
+---
+title: Edit
+description: Edit and modify PDF documents programmatically with AI-powered instructions
+---
+
+## edit.run()
+
+Edits a PDF document synchronously based on provided instructions.
+
+```python
+client.edit.run(
+    document_url="https://example.com/document.pdf",
+    edit_instructions="Fill in the form fields with the provided data",
+    edit_options={...},
+    form_schema=[...],
+    priority=False
+)
+```
+
+### Parameters
+
+<ParamField path="document_url" type="string" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+</ParamField>
+
+<ParamField path="edit_instructions" type="string" required>
+  The instructions for the edit. Describe what changes should be made to the document.
+</ParamField>
+
+<ParamField path="edit_options" type="object" optional>
+  Configuration options for the edit operation.
+</ParamField>
+
+<ParamField path="form_schema" type="Iterable[FormSchema]" optional>
+  Form schema for PDF forms. List of widgets with their types, descriptions, and bounding boxes. Only works for PDFs.
+</ParamField>
+
+<ParamField path="priority" type="boolean" optional>
+  If `True`, attempts to process the job with priority if the user has priority processing budget available. By default, sync jobs are prioritized above async jobs.
+</ParamField>
+
+### Response
+
+<ResponseField name="EditResponse" type="object">
+  Returns the edited document.
+
+  <ResponseField name="result" type="object">
+    The edited document data.
+  </ResponseField>
+</ResponseField>
+
+---
+
+## edit.run_job()
+
+Edits a PDF document asynchronously and returns a job ID immediately.
+
+```python
+response = client.edit.run_job(
+    document_url="https://example.com/document.pdf",
+    edit_instructions="Fill in the form fields with the provided data",
+    edit_options={...},
+    form_schema=[...],
+    priority=False,
+    webhook={"url": "https://example.com/webhook"}
+)
+
+print(response.job_id)  # Use this to check job status later
+```
+
+### Parameters
+
+<ParamField path="document_url" type="string" required>
+  The URL of the document to be processed. You can provide one of the following:
+  1. A publicly available URL
+  2. A presigned S3 URL
+  3. A `reducto://` prefixed URL obtained from the /upload endpoint after directly uploading a document
+</ParamField>
+
+<ParamField path="edit_instructions" type="string" required>
+  The instructions for the edit. Describe what changes should be made to the document.
+</ParamField>
+
+<ParamField path="edit_options" type="object" optional>
+  Configuration options for the edit operation.
+</ParamField>
+
+<ParamField path="form_schema" type="Iterable[FormSchema]" optional>
+  Form schema for PDF forms. List of widgets with their types, descriptions, and bounding boxes. Only works for PDFs.
+</ParamField>
+
+<ParamField path="priority" type="boolean" optional>
+  If `True`, attempts to process the job with priority if the user has priority processing budget available. By default, sync jobs are prioritized above async jobs.
+</ParamField>
+
+<ParamField path="webhook" type="WebhookConfigNew" optional>
+  Webhook configuration to receive notification when the job completes.
+</ParamField>
+
+### Response
+
+<ResponseField name="EditRunJobResponse" type="object">
+  <ResponseField name="job_id" type="string">
+    The ID of the asynchronous job. Use `client.job.get(job_id)` to retrieve the result when the job completes.
+  </ResponseField>
+</ResponseField>

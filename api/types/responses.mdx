@@ -1,0 +1,278 @@
+---
+title: Response Types
+description: Response types returned by Reducto API operations
+---
+
+## ParseResponse
+
+Response from document parsing operations.
+
+<ResponseField name="duration" type="float" required>
+  The duration of the parse request in seconds.
+</ResponseField>
+
+<ResponseField name="job_id" type="string" required>
+  Unique identifier for the parse job.
+</ResponseField>
+
+<ResponseField name="result" type="Result" required>
+  The response from the document processing service. Can be either a Full Result or URL Result. Due to HTTPS size limitations, large responses are returned as presigned URLs.
+</ResponseField>
+
+<ResponseField name="usage" type="ParseUsage" required>
+  Usage information for the parse operation.
+</ResponseField>
+
+<ResponseField name="pdf_url" type="string">
+  The storage URL of the converted PDF file.
+</ResponseField>
+
+<ResponseField name="studio_link" type="string">
+  The link to the studio pipeline for the document.
+</ResponseField>
+
+### Result Types
+
+#### Full Result
+
+<ResponseField name="chunks" type="List[Chunk]" required>
+  Array of extracted chunks from the document.
+</ResponseField>
+
+<ResponseField name="type" type="literal" required>
+  Always set to "full".
+</ResponseField>
+
+<ResponseField name="custom" type="object">
+  Custom metadata fields.
+</ResponseField>
+
+<ResponseField name="ocr" type="OCRResult">
+  OCR data including lines and words with bounding boxes and confidence scores.
+</ResponseField>
+
+#### URL Result
+
+<ResponseField name="result_id" type="string" required>
+  Unique identifier for the result.
+</ResponseField>
+
+<ResponseField name="type" type="literal" required>
+  Always set to "url".
+</ResponseField>
+
+<ResponseField name="url" type="string" required>
+  Presigned URL to download the full result.
+</ResponseField>
+
+### Chunk Structure
+
+<ResponseField name="blocks" type="List[Block]" required>
+  Array of blocks within the chunk.
+</ResponseField>
+
+<ResponseField name="content" type="string" required>
+  The content of the chunk extracted from the document.
+</ResponseField>
+
+<ResponseField name="embed" type="string" required>
+  Chunk content optimized for embedding and retrieval.
+</ResponseField>
+
+<ResponseField name="enriched" type="string">
+  The enriched content of the chunk extracted from the document.
+</ResponseField>
+
+<ResponseField name="enrichment_success" type="boolean">
+  Whether the enrichment was successful.
+</ResponseField>
+
+### Block Structure
+
+<ResponseField name="bbox" type="BoundingBox" required>
+  The bounding box of the block extracted from the document.
+</ResponseField>
+
+<ResponseField name="content" type="string" required>
+  The content of the block extracted from the document.
+</ResponseField>
+
+<ResponseField name="type" type="enum" required>
+  The type of block. One of: `Header`, `Footer`, `Title`, `Section Header`, `Page Number`, `List Item`, `Figure`, `Table`, `Key Value`, `Text`, `Comment`, `Signature`.
+</ResponseField>
+
+<ResponseField name="chart_data" type="List[string]">
+  (Experimental) The URL/link to chart data JSON for figure blocks processed by chart agent.
+</ResponseField>
+
+<ResponseField name="confidence" type="string">
+  The confidence for the block ("low" or "high"). Takes into account factors like OCR and table structure.
+</ResponseField>
+
+<ResponseField name="extra" type="Dict[string, object]">
+  Extra metadata fields for the block. Fields like 'is_chart' will only appear when set to True.
+</ResponseField>
+
+<ResponseField name="granular_confidence" type="GranularConfidence">
+  Granular confidence scores for the block. Available when numeric confidence scores are enabled.
+</ResponseField>
+
+<ResponseField name="image_url" type="string">
+  (Experimental) The URL of the image associated with the block.
+</ResponseField>
+
+## ExtractResponse
+
+Response from structured data extraction operations.
+
+<ResponseField name="result" type="List[object]" required>
+  The extracted response in your provided schema. This is a list of dictionaries. If disable_chunking is True (default), then it will be a list of length one.
+</ResponseField>
+
+<ResponseField name="usage" type="ExtractUsage" required>
+  Usage information for the extract operation.
+</ResponseField>
+
+<ResponseField name="citations" type="List[object]">
+  The citations corresponding to the extracted response.
+</ResponseField>
+
+<ResponseField name="job_id" type="string">
+  Unique identifier for the extract job.
+</ResponseField>
+
+<ResponseField name="studio_link" type="string">
+  The link to the studio pipeline for the document.
+</ResponseField>
+
+## V3ExtractResponse
+
+Response from V3 extraction operations.
+
+<ResponseField name="result" type="Union[List[object], object]" required>
+  The extracted response in your provided schema. This is a list of dictionaries. If disable_chunking is True (default), then it will be a list of length one.
+</ResponseField>
+
+<ResponseField name="usage" type="ExtractUsage" required>
+  Usage information for the extract operation.
+</ResponseField>
+
+<ResponseField name="job_id" type="string">
+  Unique identifier for the extract job.
+</ResponseField>
+
+<ResponseField name="studio_link" type="string">
+  The link to the studio pipeline for the document.
+</ResponseField>
+
+## SplitResponse
+
+Response from document splitting operations.
+
+<ResponseField name="result" type="SplitResult" required>
+  The split result containing section mappings and splits.
+</ResponseField>
+
+<ResponseField name="usage" type="ParseUsage" required>
+  Usage information for the split operation.
+</ResponseField>
+
+### SplitResult Structure
+
+<ResponseField name="splits" type="List[Split]" required>
+  Array of document splits.
+</ResponseField>
+
+<ResponseField name="section_mapping" type="Dict[string, List[int]]">
+  Mapping of section names to page numbers.
+</ResponseField>
+
+### Split Structure
+
+<ResponseField name="name" type="string" required>
+  Name of the split section.
+</ResponseField>
+
+<ResponseField name="pages" type="List[int]" required>
+  Page numbers included in this split.
+</ResponseField>
+
+<ResponseField name="conf" type="enum">
+  Confidence level of the split ("high" or "low").
+</ResponseField>
+
+<ResponseField name="partitions" type="List[Partition]">
+  Sub-partitions within this split.
+</ResponseField>
+
+## EditResponse
+
+Response from document editing operations.
+
+<ResponseField name="document_url" type="string" required>
+  Presigned URL to download the edited document.
+</ResponseField>
+
+<ResponseField name="form_schema" type="List[FormSchema]">
+  Form schema for PDF forms. List of widgets with their types, descriptions, and bounding boxes.
+</ResponseField>
+
+<ResponseField name="usage" type="ParseUsage">
+  Usage information for the edit operation, including number of pages and credits charged.
+</ResponseField>
+
+### FormSchema Structure
+
+<ResponseField name="bbox" type="BoundingBox" required>
+  Bounding box coordinates of the widget.
+</ResponseField>
+
+<ResponseField name="description" type="string" required>
+  Description of the widget extracted from the document.
+</ResponseField>
+
+<ResponseField name="type" type="enum" required>
+  Type of the form widget. One of: `text`, `checkbox`, `radio`, `dropdown`, `barcode`.
+</ResponseField>
+
+<ResponseField name="fill" type="boolean">
+  If True (default), the system will attempt to fill this widget. If False, the widget will be created but intentionally left unfilled.
+</ResponseField>
+
+<ResponseField name="value" type="string">
+  If provided, this value will be used directly instead of attempting to intelligently determine the field value.
+</ResponseField>
+
+## PipelineResponse
+
+Response from pipeline operations combining multiple processing steps.
+
+<ResponseField name="job_id" type="string" required>
+  Unique identifier for the pipeline job.
+</ResponseField>
+
+<ResponseField name="result" type="PipelineResult" required>
+  Combined results from all pipeline steps.
+</ResponseField>
+
+<ResponseField name="usage" type="ParseUsage" required>
+  Total usage information for the pipeline operation.
+</ResponseField>
+
+### PipelineResult Structure
+
+<ResponseField name="extract" type="Union[List[ExtractResult], ExtractResponse, V3ExtractResponse]">
+  Extract operation results. Can be a list of results (for Extract -> Split pipelines) or a single result.
+</ResponseField>
+
+<ResponseField name="parse" type="Union[ParseResponse, List[ParseResponse]]">
+  Parse operation results. Can be a single response or list of responses.
+</ResponseField>
+
+<ResponseField name="split" type="SplitResponse">
+  Split operation results.
+</ResponseField>
+
+<ResponseField name="edit" type="EditResponse">
+  Edit operation results.
+</ResponseField>
